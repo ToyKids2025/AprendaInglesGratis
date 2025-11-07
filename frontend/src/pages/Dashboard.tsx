@@ -162,6 +162,54 @@ export default function Dashboard() {
             </div>
           </Link>
         </div>
+
+        {/* New Features Section */}
+        <div className="mt-8">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">🎯 Explore Mais</h2>
+          <div className="grid md:grid-cols-3 gap-6">
+            <Link
+              to="/achievements"
+              className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition border-2 border-purple-200"
+            >
+              <div className="text-4xl mb-3">🏆</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Conquistas</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Desbloqueie badges e ganhe XP extra
+              </p>
+              <div className="text-purple-600 font-semibold text-sm">
+                {stats.achievements} de 8 desbloqueadas →
+              </div>
+            </Link>
+
+            <Link
+              to="/leaderboard"
+              className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition border-2 border-yellow-200"
+            >
+              <div className="text-4xl mb-3">🏅</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Ranking</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Compete com estudantes globalmente
+              </p>
+              <div className="text-yellow-600 font-semibold text-sm">
+                Ver sua posição →
+              </div>
+            </Link>
+
+            <Link
+              to="/certificate"
+              className="bg-white rounded-xl p-6 shadow hover:shadow-lg transition border-2 border-blue-200"
+            >
+              <div className="text-4xl mb-3">🎓</div>
+              <h3 className="text-lg font-bold text-gray-900 mb-2">Certificado</h3>
+              <p className="text-gray-600 text-sm mb-3">
+                Gere seu certificado profissional
+              </p>
+              <div className="text-blue-600 font-semibold text-sm">
+                Gerar agora →
+              </div>
+            </Link>
+          </div>
+        </div>
       </main>
     </div>
   )
