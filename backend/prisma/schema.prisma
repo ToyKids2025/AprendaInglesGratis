@@ -1,0 +1,187 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id        String   @id @default(uuid())
+  email     String   @unique
+  password  String
+  name      String?
+  avatar    String?
+
+  // Gamification
+  xp                Int      @default(0)
+  level             Int      @default(1)
+  streak            Int      @default(0)
+  lastStudyDate     DateTime?
+
+  // Premium
+  isPremium         Boolean  @default(false)
+  premiumExpiresAt  DateTime?
+
+  // Timestamps
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  // Relations
+  refreshTokens     RefreshToken[]
+  progress          UserProgress[]
+  achievements      UserAchievement[]
+  conversations     AIConversation[]
+  payments          Payment[]
+
+  @@index([email])
+  @@index([xp])
+}
+
+model RefreshToken {
+  id        String   @id @default(uuid())
+  token     String   @unique
+  userId    String
+  expiresAt DateTime
+  createdAt DateTime @default(now())
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([token])
+}
+
+model Level {
+  id          Int      @id @default(autoincrement())
+  number      Int      @unique
+  name        String
+  description String
+  minXP       Int
+  color       String
+  icon        String
+
+  categories Category[]
+
+  @@index([number])
+}
+
+model Category {
+  id          Int      @id @default(autoincrement())
+  levelId     Int
+  name        String
+  slug        String   @unique
+  description String
+  icon        String
+  order       Int
+
+  level   Level    @relation(fields: [levelId], references: [id])
+  phrases Phrase[]
+
+  @@index([levelId])
+  @@index([slug])
+}
+
+model Phrase {
+  id         Int      @id @default(autoincrement())
+  categoryId Int
+  en         String
+  pt         String
+  tip        String?
+  audioUrl   String?
+  difficulty Int      @default(1)
+  order      Int
+  createdAt  DateTime @default(now())
+
+  category Category       @relation(fields: [categoryId], references: [id])
+  progress UserProgress[]
+
+  @@index([categoryId])
+  @@index([difficulty])
+}
+
+model UserProgress {
+  id             Int       @id @default(autoincrement())
+  userId         String
+  phraseId       Int
+  mastery        Int       @default(0) // 0-5
+  timesReviewed  Int       @default(0)
+  correctAnswers Int       @default(0)
+  wrongAnswers   Int       @default(0)
+  nextReviewAt   DateTime?
+  lastReviewAt   DateTime?
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase Phrase @relation(fields: [phraseId], references: [id])
+
+  @@unique([userId, phraseId])
+  @@index([userId])
+  @@index([nextReviewAt])
+}
+
+model Achievement {
+  id          Int    @id @default(autoincrement())
+  slug        String @unique
+  name        String
+  description String
+  icon        String
+  xpReward    Int
+  type        String // "xp", "streak", "phrases", "level"
+  target      Int
+
+  users UserAchievement[]
+
+  @@index([slug])
+}
+
+model UserAchievement {
+  id            Int      @id @default(autoincrement())
+  userId        String
+  achievementId Int
+  unlockedAt    DateTime @default(now())
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievement Achievement @relation(fields: [achievementId], references: [id])
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+}
+
+model AIConversation {
+  id          String    @id @default(uuid())
+  userId      String
+  scenario    String
+  difficulty  Int
+  messages    Json // Array of messages
+  score       Int?
+  feedback    String?
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model Payment {
+  id              String   @id @default(uuid())
+  userId          String
+  stripePaymentId String   @unique
+  plan            String // "monthly", "yearly", "lifetime"
+  amount          Decimal  @db.Decimal(10, 2)
+  currency        String   @default("BRL")
+  status          String // "pending", "completed", "failed"
+  createdAt       DateTime @default(now())
+  paidAt          DateTime?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+}
