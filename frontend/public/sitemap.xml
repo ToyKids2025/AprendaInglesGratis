@@ -52,4 +52,20 @@
     <priority>0.8</priority>
   </url>
 
+  <!-- Terms of Service -->
+  <url>
+    <loc>https://englishflow.vercel.app/terms</loc>
+    <lastmod>2024-11-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
+  <!-- Privacy Policy -->
+  <url>
+    <loc>https://englishflow.vercel.app/privacy</loc>
+    <lastmod>2024-11-07</lastmod>
+    <changefreq>yearly</changefreq>
+    <priority>0.5</priority>
+  </url>
+
 </urlset>
