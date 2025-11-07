@@ -146,18 +146,21 @@ export default function Dashboard() {
             </div>
           </Link>
 
-          <div className="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-xl p-8 hover:shadow-lg transition group cursor-not-allowed opacity-75">
+          <Link
+            to="/conversation"
+            className="bg-gradient-to-br from-green-500 to-teal-500 text-white rounded-xl p-8 hover:shadow-lg transition group"
+          >
             <div className="flex items-center justify-between mb-4">
               <div>
-                <h3 className="text-2xl font-bold mb-2">Conversar com IA</h3>
-                <p className="text-orange-100">Pratique conversação</p>
+                <h3 className="text-2xl font-bold mb-2">🤖 Conversar com IA</h3>
+                <p className="text-green-100">Pratique inglês com IA 24/7</p>
               </div>
-              <Trophy className="w-12 h-12 group-hover:scale-110 transition" />
+              <Zap className="w-12 h-12 group-hover:scale-110 transition" />
             </div>
-            <div className="text-sm text-orange-200">
-              Em breve - Semana 2
+            <div className="text-sm text-green-200">
+              ✨ NOVO! Converse em inglês com inteligência artificial
             </div>
-          </div>
+          </Link>
         </div>
       </main>
     </div>
