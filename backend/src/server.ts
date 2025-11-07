@@ -5,6 +5,7 @@ import authRoutes from './routes/auth.routes'
 import userRoutes from './routes/user.routes'
 import lessonRoutes from './routes/lesson.routes'
 import aiRoutes from './routes/ai.routes'
+import contactRoutes from './routes/contact.routes'
 import { errorHandler } from './middleware/errorHandler'
 
 dotenv.config()
@@ -29,6 +30,7 @@ app.use('/api/auth', authRoutes)
 app.use('/api/users', userRoutes)
 app.use('/api/lessons', lessonRoutes)
 app.use('/api/ai', aiRoutes)
+app.use('/api/contact', contactRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)

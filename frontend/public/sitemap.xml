@@ -68,4 +68,12 @@
     <priority>0.5</priority>
   </url>
 
+  <!-- Contact -->
+  <url>
+    <loc>https://englishflow.vercel.app/contact</loc>
+    <lastmod>2024-11-07</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+
 </urlset>
