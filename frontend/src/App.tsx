@@ -12,10 +12,12 @@ import Achievements from './pages/Achievements'
 import Leaderboard from './pages/Leaderboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
+import ErrorBoundary from './components/common/ErrorBoundary'
 
 function App() {
   return (
-    <BrowserRouter>
+    <ErrorBoundary>
+      <BrowserRouter>
       <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
@@ -106,6 +108,7 @@ function App() {
         <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   )
 }
 
