@@ -1,24 +1,40 @@
+import { lazy, Suspense } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
-import Home from './pages/Home'
-import Login from './pages/Login'
-import Register from './pages/Register'
-import Dashboard from './pages/Dashboard'
-import Lessons from './pages/Lessons'
-import Profile from './pages/Profile'
-import AIConversation from './pages/AIConversation'
-import Admin from './pages/Admin'
-import Certificate from './pages/Certificate'
-import Achievements from './pages/Achievements'
-import Leaderboard from './pages/Leaderboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 import ErrorBoundary from './components/common/ErrorBoundary'
+
+// Lazy load pages for better performance and code splitting
+const Home = lazy(() => import('./pages/Home'))
+const Login = lazy(() => import('./pages/Login'))
+const Register = lazy(() => import('./pages/Register'))
+const Dashboard = lazy(() => import('./pages/Dashboard'))
+const Lessons = lazy(() => import('./pages/Lessons'))
+const Profile = lazy(() => import('./pages/Profile'))
+const AIConversation = lazy(() => import('./pages/AIConversation'))
+const Admin = lazy(() => import('./pages/Admin'))
+const Certificate = lazy(() => import('./pages/Certificate'))
+const Achievements = lazy(() => import('./pages/Achievements'))
+const Leaderboard = lazy(() => import('./pages/Leaderboard'))
+
+// Loading fallback component
+function PageLoader() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
+      <div className="text-center">
+        <div className="inline-block animate-spin rounded-full h-12 w-12 border-4 border-primary-600 border-t-transparent mb-4"></div>
+        <p className="text-gray-600 font-medium">Carregando...</p>
+      </div>
+    </div>
+  )
+}
 
 function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
-      <Routes>
+        <Suspense fallback={<PageLoader />}>
+          <Routes>
         {/* Public Routes */}
         <Route path="/" element={<Home />} />
         <Route
@@ -104,10 +120,11 @@ function App() {
           }
         />
 
-        {/* Fallback */}
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </BrowserRouter>
+            {/* Fallback */}
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </Suspense>
+      </BrowserRouter>
     </ErrorBoundary>
   )
 }
