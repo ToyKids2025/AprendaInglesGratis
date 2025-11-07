@@ -7,6 +7,7 @@ import Lessons from './pages/Lessons'
 import Profile from './pages/Profile'
 import AIConversation from './pages/AIConversation'
 import Admin from './pages/Admin'
+import Certificate from './pages/Certificate'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 
@@ -71,6 +72,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Admin />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/certificate"
+          element={
+            <ProtectedRoute>
+              <Certificate />
             </ProtectedRoute>
           }
         />
