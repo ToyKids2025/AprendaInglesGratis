@@ -8,6 +8,8 @@ import Profile from './pages/Profile'
 import AIConversation from './pages/AIConversation'
 import Admin from './pages/Admin'
 import Certificate from './pages/Certificate'
+import Achievements from './pages/Achievements'
+import Leaderboard from './pages/Leaderboard'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 
@@ -80,6 +82,22 @@ function App() {
           element={
             <ProtectedRoute>
               <Certificate />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/achievements"
+          element={
+            <ProtectedRoute>
+              <Achievements />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/leaderboard"
+          element={
+            <ProtectedRoute>
+              <Leaderboard />
             </ProtectedRoute>
           }
         />
