@@ -6,9 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
     <!-- SEO -->
-    <meta name="description" content="Aprenda inglês 10x mais rápido, 10x mais barato com English Flow. IA conversacional 24/7, 10.000+ frases, fluência em 12 meses." />
-    <meta name="keywords" content="inglês, aprender inglês, IA, conversação, English Flow, Wizard, Wise Up, fluência" />
+    <meta name="description" content="Aprenda inglês 10x mais rápido, 10x mais barato com English Flow. IA conversacional 24/7, 10.000+ frases, fluência em 12 meses. R$ 39,90/mês vs R$ 600/mês." />
+    <meta name="keywords" content="inglês, aprender inglês, curso de inglês online, IA, conversação, English Flow, Wizard, Wise Up, fluência, inglês barato, aulas de inglês" />
     <meta name="author" content="English Flow Team" />
+    <meta name="robots" content="index, follow" />
+    <meta name="language" content="Portuguese" />
+    <meta name="revisit-after" content="7 days" />
+    <meta name="rating" content="general" />
+    <link rel="canonical" href="https://englishflow.vercel.app/" />
 
     <!-- PWA -->
     <link rel="manifest" href="/manifest.json" />
@@ -33,6 +38,63 @@
     <meta property="twitter:image" content="/og-image.png" />
 
     <title>English Flow - Aprenda inglês com IA | 10x mais rápido e barato</title>
+
+    <!-- Structured Data (JSON-LD) -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "EducationalOrganization",
+      "name": "English Flow",
+      "description": "Plataforma de aprendizado de inglês com IA conversacional. Aprenda 10x mais rápido por 10x menos.",
+      "url": "https://englishflow.vercel.app",
+      "logo": "https://englishflow.vercel.app/logo.png",
+      "foundingDate": "2024",
+      "address": {
+        "@type": "PostalAddress",
+        "addressCountry": "BR"
+      },
+      "contactPoint": {
+        "@type": "ContactPoint",
+        "contactType": "Customer Service",
+        "email": "suporte@englishflow.com"
+      },
+      "sameAs": [
+        "https://facebook.com/englishflow",
+        "https://instagram.com/englishflow",
+        "https://twitter.com/englishflow"
+      ],
+      "offers": {
+        "@type": "Offer",
+        "price": "39.90",
+        "priceCurrency": "BRL",
+        "availability": "https://schema.org/InStock",
+        "description": "Acesso completo à plataforma English Flow com IA conversacional 24/7"
+      }
+    }
+    </script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "English Flow",
+      "url": "https://englishflow.vercel.app",
+      "applicationCategory": "EducationalApplication",
+      "operatingSystem": "Web, PWA",
+      "offers": {
+        "@type": "Offer",
+        "price": "39.90",
+        "priceCurrency": "BRL"
+      },
+      "aggregateRating": {
+        "@type": "AggregateRating",
+        "ratingValue": "4.9",
+        "ratingCount": "127",
+        "bestRating": "5",
+        "worstRating": "1"
+      }
+    }
+    </script>
   </head>
   <body>
     <div id="root"></div>

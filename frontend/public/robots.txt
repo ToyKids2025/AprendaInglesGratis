@@ -1,0 +1,36 @@
+# robots.txt for English Flow
+
+# Allow all crawlers
+User-agent: *
+Allow: /
+
+# Disallow admin and private routes
+Disallow: /admin
+Disallow: /profile
+Disallow: /dashboard
+Disallow: /lessons
+Disallow: /conversation
+Disallow: /achievements
+Disallow: /leaderboard
+Disallow: /certificate
+
+# Allow public pages
+Allow: /
+Allow: /login
+Allow: /register
+
+# Sitemap location
+Sitemap: https://englishflow.vercel.app/sitemap.xml
+
+# Crawl delay (be nice to servers)
+Crawl-delay: 1
+
+# Specific bot rules
+User-agent: Googlebot
+Allow: /
+
+User-agent: Bingbot
+Allow: /
+
+User-agent: Slurp
+Allow: /

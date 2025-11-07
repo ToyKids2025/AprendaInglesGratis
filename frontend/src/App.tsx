@@ -3,6 +3,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 import ErrorBoundary from './components/common/ErrorBoundary'
+import SkipLinks from './components/common/SkipLinks'
 
 // Lazy load pages for better performance and code splitting
 const Home = lazy(() => import('./pages/Home'))
@@ -32,6 +33,7 @@ function PageLoader() {
 function App() {
   return (
     <ErrorBoundary>
+      <SkipLinks />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>
