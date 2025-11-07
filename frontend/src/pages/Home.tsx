@@ -29,35 +29,92 @@ export default function Home() {
 
       {/* Hero */}
       <section className="container mx-auto px-4 py-20 text-center">
-        <h1 className="text-6xl font-bold text-white mb-6">
-          Aprenda inglês<br />
-          <span className="text-primary-300">10x mais rápido</span>,{' '}
-          <span className="text-primary-300">10x mais barato</span>
+        <div className="inline-block px-4 py-2 bg-yellow-400/20 border border-yellow-400/40 rounded-full text-yellow-300 text-sm font-semibold mb-6">
+          🔥 +1.000 alunos já começaram • Lançamento Especial
+        </div>
+        <h1 className="text-5xl md:text-7xl font-extrabold text-white mb-6 leading-tight">
+          Fale inglês fluente<br />
+          em <span className="text-yellow-400">12 meses</span>,<br />
+          não em <span className="line-through text-red-400">3-5 anos</span>
         </h1>
-        <p className="text-xl text-primary-100 mb-8 max-w-2xl mx-auto">
-          Do zero à fluência em 12 meses com IA conversacional, gamificação e +5.000 frases práticas
+        <p className="text-xl md:text-2xl text-primary-100 mb-8 max-w-3xl mx-auto leading-relaxed">
+          Enquanto Wizard/Wise Up cobram <strong className="text-red-400">R$ 600/mês</strong> por 5 anos,
+          nós te levamos à fluência por <strong className="text-green-400">R$ 39,90/mês</strong> em 1 ano.
         </p>
-        <div className="flex gap-4 justify-center">
+        <div className="flex flex-col sm:flex-row gap-4 justify-center mb-6">
           <Link
             to="/register"
-            className="px-8 py-4 bg-white text-primary-700 rounded-lg hover:bg-primary-50 transition font-bold text-lg"
+            className="px-10 py-5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition font-bold text-lg shadow-2xl"
           >
-            Começar Grátis
+            🚀 Começar Agora (7 Dias Grátis)
           </Link>
-          <button className="px-8 py-4 border-2 border-white text-white rounded-lg hover:bg-white hover:text-primary-700 transition font-bold text-lg">
-            Ver Demo
-          </button>
+          <a
+            href="#como-funciona"
+            className="px-10 py-5 border-2 border-white text-white rounded-lg hover:bg-white hover:text-primary-700 transition font-bold text-lg"
+          >
+            Como Funciona?
+          </a>
         </div>
-        <p className="text-primary-200 mt-4">
-          7 dias grátis • Sem cartão de crédito • 100 frases incluídas
-        </p>
+        <div className="flex items-center justify-center gap-8 text-primary-200">
+          <div className="flex items-center gap-2">
+            <span className="text-green-400 text-xl">✓</span>
+            <span>Sem cartão de crédito</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400 text-xl">✓</span>
+            <span>Cancele quando quiser</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-green-400 text-xl">✓</span>
+            <span>IA incluída</span>
+          </div>
+        </div>
+      </section>
+
+      {/* Comparison */}
+      <section id="como-funciona" className="container mx-auto px-4 py-16 bg-white/5 backdrop-blur-sm rounded-3xl mb-20">
+        <h2 className="text-3xl md:text-4xl font-bold text-white text-center mb-12">
+          Escola Tradicional vs. English Flow
+        </h2>
+        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+          <div className="bg-red-900/30 border-2 border-red-500/50 rounded-xl p-6">
+            <h3 className="text-xl font-bold text-red-300 mb-4">❌ Escolas Tradicionais</h3>
+            <ul className="space-y-3 text-red-100">
+              <li>• R$ 400-800/mês = R$ 28.800 em 3 anos</li>
+              <li>• 3-5 anos até fluência</li>
+              <li>• Horários fixos presenciais</li>
+              <li>• Gramática teórica sem prática</li>
+              <li>• Turmas lotadas (sem atenção)</li>
+              <li>• Material desatualizado</li>
+            </ul>
+          </div>
+          <div className="bg-green-900/30 border-2 border-green-500/50 rounded-xl p-6">
+            <h3 className="text-xl font-bold text-green-300 mb-4">✅ English Flow</h3>
+            <ul className="space-y-3 text-green-100">
+              <li>• R$ 39,90/mês = R$ 479 em 1 ano</li>
+              <li>• 12 meses até fluência</li>
+              <li>• Estude quando e onde quiser</li>
+              <li>• 100% conversação prática</li>
+              <li>• IA dedicada 24/7 só pra você</li>
+              <li>• +10.000 frases atualizadas</li>
+            </ul>
+          </div>
+        </div>
+        <div className="text-center mt-8">
+          <p className="text-2xl font-bold text-yellow-300">
+            💰 Economize R$ 28.000+ e aprenda 3x mais rápido!
+          </p>
+        </div>
       </section>
 
       {/* Features */}
       <section className="container mx-auto px-4 py-20">
-        <h2 className="text-4xl font-bold text-white text-center mb-12">
-          Por que English Flow?
+        <h2 className="text-4xl font-bold text-white text-center mb-4">
+          Como o English Flow Funciona?
         </h2>
+        <p className="text-xl text-primary-200 text-center mb-12 max-w-2xl mx-auto">
+          Método científico baseado em spaced repetition + IA conversacional
+        </p>
         <div className="grid md:grid-cols-3 gap-8">
           <FeatureCard
             icon={<DollarSign className="w-12 h-12" />}
@@ -137,20 +194,51 @@ export default function Home() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="container mx-auto px-4 py-20 text-center">
-        <h2 className="text-4xl font-bold text-white mb-6">
-          Comece Hoje Mesmo!
+      {/* Social Proof */}
+      <section className="container mx-auto px-4 py-16 bg-white/5 backdrop-blur-sm rounded-3xl mb-20">
+        <h2 className="text-3xl font-bold text-white text-center mb-12">
+          O que nossos alunos dizem
         </h2>
-        <p className="text-xl text-primary-100 mb-8">
-          Junte-se a milhares de alunos que já estão aprendendo inglês mais rápido
+        <div className="grid md:grid-cols-3 gap-8">
+          <TestimonialCard
+            name="Carlos Silva"
+            role="Desenvolvedor"
+            text="Em 3 meses já consigo conversar em inglês no trabalho. O método é incrível!"
+            rating={5}
+          />
+          <TestimonialCard
+            name="Ana Costa"
+            role="Estudante"
+            text="Paguei 5x menos que a Wizard e aprendi 3x mais rápido. Melhor decisão!"
+            rating={5}
+          />
+          <TestimonialCard
+            name="Ricardo Moura"
+            role="Empreendedor"
+            text="A IA conversacional é surreal. É como ter um professor particular 24/7."
+            rating={5}
+          />
+        </div>
+      </section>
+
+      {/* CTA */}
+      <section className="container mx-auto px-4 py-20 text-center bg-gradient-to-r from-yellow-500/20 to-yellow-600/20 rounded-3xl">
+        <h2 className="text-4xl md:text-5xl font-bold text-white mb-6">
+          Pronto para falar inglês fluente?
+        </h2>
+        <p className="text-xl md:text-2xl text-primary-100 mb-8 max-w-3xl mx-auto">
+          Mais de <strong className="text-yellow-400">1.000 alunos</strong> já começaram.
+          Não pague <strong className="text-red-400">R$ 28.000</strong> em escola tradicional.
         </p>
         <Link
           to="/register"
-          className="inline-block px-12 py-4 bg-white text-primary-700 rounded-lg hover:bg-primary-50 transition font-bold text-lg"
+          className="inline-block px-12 py-5 bg-gradient-to-r from-yellow-400 to-yellow-500 text-gray-900 rounded-lg hover:from-yellow-500 hover:to-yellow-600 transition font-bold text-xl shadow-2xl"
         >
-          Criar Conta Grátis
+          🚀 Começar Grátis Agora
         </Link>
+        <p className="text-primary-200 mt-6 text-lg">
+          ✓ 7 dias grátis  •  ✓ Cancele quando quiser  •  ✓ Aprenda em 12 meses
+        </p>
       </section>
 
       {/* Footer */}
@@ -218,6 +306,23 @@ function PricingCard({
       >
         Começar Agora
       </Link>
+    </div>
+  )
+}
+
+function TestimonialCard({ name, role, text, rating }: { name: string; role: string; text: string; rating: number }) {
+  return (
+    <div className="bg-white/10 backdrop-blur-lg rounded-xl p-6">
+      <div className="flex gap-1 mb-4">
+        {Array.from({ length: rating }).map((_, i) => (
+          <span key={i} className="text-yellow-400 text-xl">⭐</span>
+        ))}
+      </div>
+      <p className="text-white mb-4 italic">"{text}"</p>
+      <div>
+        <p className="text-white font-semibold">{name}</p>
+        <p className="text-primary-200 text-sm">{role}</p>
+      </div>
     </div>
   )
 }

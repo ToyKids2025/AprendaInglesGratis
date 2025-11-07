@@ -7,12 +7,9 @@
  */
 
 import { PrismaClient } from '@prisma/client'
-import OpenAI from 'openai'
+import { aiService } from '../src/services/ai.service'
 
 const prisma = new PrismaClient()
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY || 'sk-test',
-})
 
 // ============================================
 // DEFINIÇÃO DOS 8 NÍVEIS
@@ -124,7 +121,66 @@ const CATEGORIES_BY_LEVEL = {
     { name: 'Home', icon: '🏠', slug: 'home' },
     { name: 'Daily Routine', icon: '⏰', slug: 'routine' },
   ],
-  // ... mais níveis
+  4: [
+    { name: 'Business Meetings', icon: '💼', slug: 'business-meetings' },
+    { name: 'Job Interviews', icon: '🤝', slug: 'job-interviews' },
+    { name: 'Presentations', icon: '📊', slug: 'presentations' },
+    { name: 'Emails & Letters', icon: '✉️', slug: 'emails' },
+    { name: 'Negotiations', icon: '🤝', slug: 'negotiations' },
+    { name: 'Customer Service', icon: '🎧', slug: 'customer-service' },
+    { name: 'Office Talk', icon: '🏢', slug: 'office-talk' },
+    { name: 'Networking', icon: '🌐', slug: 'networking' },
+    { name: 'Sales & Marketing', icon: '📈', slug: 'sales' },
+    { name: 'Finance', icon: '💰', slug: 'finance' },
+  ],
+  5: [
+    { name: 'Academic English', icon: '🎓', slug: 'academic' },
+    { name: 'Debates & Discussions', icon: '🗣️', slug: 'debates' },
+    { name: 'News & Current Events', icon: '📰', slug: 'news' },
+    { name: 'Science & Research', icon: '🔬', slug: 'science' },
+    { name: 'Politics', icon: '🏛️', slug: 'politics' },
+    { name: 'Environment', icon: '🌍', slug: 'environment' },
+    { name: 'Culture & Society', icon: '🎭', slug: 'culture' },
+    { name: 'Philosophy', icon: '🤔', slug: 'philosophy' },
+    { name: 'Psychology', icon: '🧠', slug: 'psychology' },
+    { name: 'History', icon: '📜', slug: 'history' },
+  ],
+  6: [
+    { name: 'Idioms & Expressions', icon: '💬', slug: 'idioms' },
+    { name: 'Phrasal Verbs', icon: '🔄', slug: 'phrasal-verbs' },
+    { name: 'Advanced Grammar', icon: '📝', slug: 'advanced-grammar' },
+    { name: 'Literary English', icon: '📖', slug: 'literary' },
+    { name: 'Creative Writing', icon: '✍️', slug: 'creative-writing' },
+    { name: 'Public Speaking', icon: '🎤', slug: 'public-speaking' },
+    { name: 'Critical Thinking', icon: '🧩', slug: 'critical-thinking' },
+    { name: 'Abstract Concepts', icon: '🌌', slug: 'abstract' },
+    { name: 'Humor & Sarcasm', icon: '😄', slug: 'humor' },
+    { name: 'Argumentation', icon: '⚖️', slug: 'argumentation' },
+  ],
+  7: [
+    { name: 'Slang & Colloquialisms', icon: '💬', slug: 'slang' },
+    { name: 'Regional Variations', icon: '🌎', slug: 'regional' },
+    { name: 'Pop Culture', icon: '🎬', slug: 'pop-culture' },
+    { name: 'Social Issues', icon: '🤝', slug: 'social-issues' },
+    { name: 'Subtle Nuances', icon: '🎨', slug: 'nuances' },
+    { name: 'Native Expressions', icon: '🗣️', slug: 'native-expressions' },
+    { name: 'Wordplay & Puns', icon: '🎭', slug: 'wordplay' },
+    { name: 'Complex Emotions', icon: '❤️', slug: 'emotions' },
+    { name: 'Cultural References', icon: '🏛️', slug: 'cultural-refs' },
+    { name: 'Advanced Conversation', icon: '💭', slug: 'advanced-conversation' },
+  ],
+  8: [
+    { name: 'Medical English', icon: '⚕️', slug: 'medical' },
+    { name: 'Legal English', icon: '⚖️', slug: 'legal' },
+    { name: 'Technical English', icon: '🔧', slug: 'technical' },
+    { name: 'Aviation', icon: '✈️', slug: 'aviation' },
+    { name: 'Engineering', icon: '🏗️', slug: 'engineering' },
+    { name: 'IT & Programming', icon: '💻', slug: 'programming' },
+    { name: 'Architecture', icon: '🏛️', slug: 'architecture' },
+    { name: 'Journalism', icon: '📰', slug: 'journalism' },
+    { name: 'Marketing & Advertising', icon: '📢', slug: 'marketing' },
+    { name: 'Entrepreneurship', icon: '🚀', slug: 'entrepreneurship' },
+  ],
 }
 
 // ============================================
@@ -138,59 +194,9 @@ async function generatePhrasesForCategory(
 ): Promise<any[]> {
   console.log(`🤖 Gerando ${count} frases para: ${category} (Nível ${level})`)
 
-  const prompt = `
-You are an expert English teacher. Generate exactly ${count} practical English phrases for the category "${category}" at ${difficulty} level.
-
-Requirements:
-1. Each phrase should be PRACTICAL and USEFUL in real-life situations
-2. Include British and American English variations when relevant
-3. Focus on conversational English, not formal/academic
-4. Provide context-appropriate usage tips in Portuguese
-
-Return a JSON array with this exact structure:
-[
-  {
-    "en": "English phrase here",
-    "pt": "Tradução em português aqui",
-    "tip": "Dica de uso em português - quando/onde usar",
-    "difficulty": ${level}
-  }
-]
-
-Category: ${category}
-Level: ${level} (1=beginner, 5=advanced)
-Difficulty: ${difficulty}
-
-IMPORTANT: Return ONLY the JSON array, no additional text.
-`
-
   try {
-    const response = await openai.chat.completions.create({
-      model: 'gpt-4-turbo-preview',
-      messages: [
-        {
-          role: 'system',
-          content:
-            'You are a professional English teacher specializing in practical, conversational English for Brazilian Portuguese speakers.',
-        },
-        {
-          role: 'user',
-          content: prompt,
-        },
-      ],
-      temperature: 0.8,
-      max_tokens: 3000,
-      response_format: { type: 'json_object' }, // Força JSON
-    })
-
-    const content = response.choices[0].message.content
-    if (!content) throw new Error('Empty response from OpenAI')
-
-    // Parse JSON
-    const data = JSON.parse(content)
-    const phrases = Array.isArray(data) ? data : data.phrases || []
-
-    console.log(`✅ Geradas ${phrases.length} frases`)
+    // Usa o serviço centralizado de IA
+    const phrases = await aiService.generatePhrases(category, level, difficulty, count)
     return phrases
   } catch (error) {
     console.error(`❌ Erro ao gerar frases:`, error)
@@ -257,19 +263,25 @@ async function main() {
     }
   }
 
-  // 2. Gerar frases para Nível 1 (exemplo)
-  console.log('\n📝 Gerando frases para Nível 1...')
+  // 2. Ler argumentos e gerar frases
+  const args = process.argv.slice(2)
+  const levelsToGenerate = args.length > 0 ? args.map(Number) : [1, 2]
+  console.log(`\n📋 Gerando frases para níveis: ${levelsToGenerate.join(', ')}`)
 
-  const level1 = await prisma.level.findUnique({ where: { number: 1 } })
-  if (!level1) {
-    console.error('Nível 1 não encontrado')
-    return
-  }
-
-  const categoriesLevel1 = CATEGORIES_BY_LEVEL[1]
   let totalGenerated = 0
 
-  for (const [index, catData] of categoriesLevel1.entries()) {
+  for (const levelNum of levelsToGenerate) {
+    const levelData = LEVELS.find((l) => l.number === levelNum)
+    if (!levelData) continue
+
+    console.log(`\n📝 Nível ${levelNum} - ${levelData.name}...`)
+
+    const level = await prisma.level.findUnique({ where: { number: levelNum } })
+    if (!level) continue
+
+    const categories = CATEGORIES_BY_LEVEL[levelNum] || []
+
+    for (const [index, catData] of categories.entries()) {
     // Criar categoria
     let category = await prisma.category.findUnique({
       where: { slug: catData.slug },
@@ -278,46 +290,45 @@ async function main() {
     if (!category) {
       category = await prisma.category.create({
         data: {
-          levelId: level1.id,
+          levelId: level.id,
           name: catData.name,
           slug: catData.slug,
-          description: `${catData.name} - Frases essenciais`,
+          description: `${catData.name} - ${levelData.description}`,
           icon: catData.icon,
           order: index + 1,
         },
       })
     }
 
-    // Verificar quantas frases já existem
-    const existingCount = await prisma.phrase.count({
-      where: { categoryId: category.id },
-    })
+      // Verificar quantas frases já existem
+      const existingCount = await prisma.phrase.count({
+        where: { categoryId: category.id },
+      })
 
-    const targetPerCategory = 50 // 50 frases por categoria
-    const needed = Math.max(0, targetPerCategory - existingCount)
+      const targetPerCategory = 20 // 20 frases por categoria
+      const needed = Math.max(0, targetPerCategory - existingCount)
 
-    if (needed > 0) {
-      console.log(`\n📍 Categoria: ${catData.name}`)
-      console.log(`   Existentes: ${existingCount} | Gerando: ${needed}`)
+      if (needed > 0) {
+        console.log(`\n📍 ${catData.name}`)
+        console.log(`   Existentes: ${existingCount} | Gerando: ${needed}`)
 
-      // Gerar frases com IA
-      const phrases = await generatePhrasesForCategory(
-        catData.name,
-        1,
-        'beginner',
-        needed
-      )
+        const phrases = await generatePhrasesForCategory(
+          catData.name,
+          levelNum,
+          levelData.difficulty as string,
+          needed
+        )
 
-      // Salvar no banco
-      const saved = await savePhrases(phrases, category.id)
-      totalGenerated += saved
+        if (phrases.length > 0) {
+          const saved = await savePhrases(phrases, category.id)
+          totalGenerated += saved
+          console.log(`   ✅ Salvas: ${saved}/${needed}`)
+        }
 
-      console.log(`   ✅ Salvas: ${saved}/${needed}`)
-
-      // Aguardar 2s para não sobrecarregar API
-      await new Promise((resolve) => setTimeout(resolve, 2000))
-    } else {
-      console.log(`✓ ${catData.name}: já tem ${existingCount} frases`)
+        await new Promise((resolve) => setTimeout(resolve, 2000))
+      } else {
+        console.log(`✓ ${catData.name}: ${existingCount} frases`)
+      }
     }
   }
 
@@ -333,6 +344,8 @@ async function main() {
   console.log(`   Categorias: ${totalCategories}`)
   console.log(`   Meta: 10.000 frases`)
   console.log(`   Progresso: ${((totalPhrases / 10000) * 100).toFixed(1)}%`)
+  console.log(`\n💡 Uso: tsx scripts/generate-phrases.ts [níveis]`)
+  console.log(`   Exemplo: tsx scripts/generate-phrases.ts 1 2 3`)
 }
 
 // ============================================
