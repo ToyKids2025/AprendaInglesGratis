@@ -17,6 +17,9 @@ const Admin = lazy(() => import('./pages/Admin'))
 const Certificate = lazy(() => import('./pages/Certificate'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
+const Pricing = lazy(() => import('./pages/Pricing'))
+const About = lazy(() => import('./pages/About'))
+const FAQ = lazy(() => import('./pages/FAQ'))
 
 // Loading fallback component
 function PageLoader() {
@@ -55,6 +58,9 @@ function App() {
             </PublicRoute>
           }
         />
+        <Route path="/pricing" element={<Pricing />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/faq" element={<FAQ />} />
 
         {/* Protected Routes */}
         <Route
