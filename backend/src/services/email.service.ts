@@ -341,6 +341,109 @@ export const emailTemplates = {
     }),
   }),
 
+  [EmailType.SUBSCRIPTION_CANCELLED]: (data: SubscriptionCancelledData) => ({
+    subject: 'Assinatura cancelada - English Flow',
+    html: EmailLayout({
+      preheader: 'Sua assinatura foi cancelada com sucesso',
+      children: `
+        <h2>Olá ${data.name},</h2>
+        <p>Confirmamos o cancelamento da sua assinatura do plano <strong>${data.plan}</strong>.</p>
+
+        <div class="stats">
+          <div class="stats-item"><strong>Plano cancelado:</strong> ${data.plan}</div>
+          <div class="stats-item"><strong>Data de encerramento:</strong> ${data.endDate}</div>
+          <div class="stats-item"><strong>Status:</strong> Cancelado</div>
+        </div>
+
+        <p>Você ainda tem acesso ao plano premium até <strong>${data.endDate}</strong>. Após esta data, sua conta voltará ao plano gratuito.</p>
+
+        <div class="divider"></div>
+
+        <p><strong>O que você ainda pode fazer:</strong></p>
+        <ul style="margin-left: 20px; margin-bottom: 15px;">
+          <li>✅ Continuar estudando até ${data.endDate}</li>
+          <li>✅ Acessar seu progresso e estatísticas</li>
+          <li>✅ Baixar seus certificados</li>
+          <li>✅ Reativar sua assinatura a qualquer momento</li>
+        </ul>
+
+        <p><strong>Mudou de ideia?</strong> Você pode reativar sua assinatura a qualquer momento:</p>
+        <a href="https://englishflow.vercel.app/pricing" class="button">Reativar Assinatura 🔄</a>
+
+        <div class="divider"></div>
+
+        <p>Se você cancelou por algum problema ou insatisfação, gostaríamos muito de ouvir seu feedback. Responda este email e conte-nos como podemos melhorar!</p>
+
+        <p style="margin-top: 30px;">Esperamos te ver de volta em breve! 👋<br><strong>Equipe English Flow</strong></p>
+      `,
+    }),
+  }),
+
+  [EmailType.PAYMENT_RECEIPT]: (data: PaymentReceiptData) => ({
+    subject: `Recibo de pagamento - ${data.amount}`,
+    html: EmailLayout({
+      preheader: `Seu pagamento de ${data.amount} foi processado com sucesso`,
+      children: `
+        <h2>Olá ${data.name}! 💳</h2>
+        <p>Recebemos seu pagamento com sucesso. Obrigado por continuar com o English Flow!</p>
+
+        <div class="stats">
+          <div class="stats-item"><strong>Valor pago:</strong> ${data.amount}</div>
+          <div class="stats-item"><strong>Data:</strong> ${data.date}</div>
+          <div class="stats-item"><strong>Próximo pagamento:</strong> ${data.nextBillingDate}</div>
+          <div class="stats-item"><strong>Status:</strong> ✅ Pago</div>
+        </div>
+
+        <p>Você pode acessar a fatura completa e os detalhes do pagamento clicando no botão abaixo:</p>
+        <a href="${data.invoiceUrl}" class="button">Ver Fatura Completa 📄</a>
+
+        <div class="divider"></div>
+
+        <p><strong>💡 Dica:</strong> Seus pagamentos são processados automaticamente. Você não precisa fazer nada - apenas continue estudando e evoluindo! 🚀</p>
+
+        <p><strong>Precisa de ajuda?</strong> Se tiver qualquer dúvida sobre sua fatura ou pagamento, responda este email ou acesse nosso <a href="https://englishflow.vercel.app/faq">FAQ</a>.</p>
+
+        <p style="margin-top: 30px;">Continue com seu ótimo trabalho! 💪<br><strong>Equipe English Flow</strong></p>
+      `,
+    }),
+  }),
+
+  [EmailType.PAYMENT_FAILED]: (data: PaymentFailedData) => ({
+    subject: '⚠️ Falha no pagamento - Ação necessária',
+    html: EmailLayout({
+      preheader: 'Houve um problema com seu pagamento. Atualize seus dados.',
+      children: `
+        <h2>Olá ${data.name},</h2>
+        <p>Tentamos processar seu pagamento de <strong>${data.amount}</strong>, mas infelizmente não foi possível completar a transação.</p>
+
+        <div class="stats" style="background: #fef2f2; border-left: 4px solid #ef4444;">
+          <div class="stats-item"><strong>Valor:</strong> ${data.amount}</div>
+          <div class="stats-item"><strong>Status:</strong> ❌ Falhou</div>
+          <div class="stats-item"><strong>Motivo:</strong> ${data.reason}</div>
+        </div>
+
+        <p><strong>⚠️ O que fazer agora?</strong></p>
+        <p>Para evitar a interrupção do seu acesso premium, por favor atualize suas informações de pagamento o mais rápido possível:</p>
+
+        <a href="${data.updatePaymentUrl}" class="button" style="background: #ef4444;">Atualizar Forma de Pagamento 💳</a>
+
+        <div class="divider"></div>
+
+        <p><strong>Motivos comuns para falha no pagamento:</strong></p>
+        <ul style="margin-left: 20px; margin-bottom: 15px;">
+          <li>Cartão expirado ou bloqueado</li>
+          <li>Limite de crédito insuficiente</li>
+          <li>Dados de cobrança desatualizados</li>
+          <li>Problema temporário com o banco</li>
+        </ul>
+
+        <p><strong>Precisa de ajuda?</strong> Se você está tendo dificuldades, entre em contato com nosso suporte respondendo este email. Estamos aqui para ajudar! 💬</p>
+
+        <p style="margin-top: 30px;">Atenciosamente,<br><strong>Equipe English Flow</strong></p>
+      `,
+    }),
+  }),
+
   [EmailType.DAILY_REMINDER]: (data: DailyReminderData) => ({
     subject: `📚 Hora de estudar! Seu streak é ${data.streak} dias 🔥`,
     html: EmailLayout({

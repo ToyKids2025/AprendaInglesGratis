@@ -3,18 +3,22 @@
  * Pricing plans and comparison
  */
 
+import { useState } from 'react'
 import { Check, X } from 'lucide-react'
 import { Link } from 'react-router-dom'
+import Checkout from '../components/Checkout'
 
 interface PricingPlan {
   name: string
   price: string
+  yearlyPrice?: string
   period: string
   description: string
   features: { name: string; included: boolean }[]
   highlighted?: boolean
   cta: string
-  ctaLink: string
+  ctaLink?: string
+  isPro?: boolean
 }
 
 const plans: PricingPlan[] = [
@@ -39,6 +43,7 @@ const plans: PricingPlan[] = [
   {
     name: 'Pro',
     price: 'R$ 39,90',
+    yearlyPrice: 'R$ 399,90',
     period: '/mês',
     description: 'Plano completo para fluência em 12 meses',
     features: [
@@ -53,7 +58,7 @@ const plans: PricingPlan[] = [
     ],
     highlighted: true,
     cta: 'Assinar Agora',
-    ctaLink: '/register',
+    isPro: true,
   },
   {
     name: 'Business',
@@ -71,11 +76,13 @@ const plans: PricingPlan[] = [
       { name: 'White label (sob consulta)', included: true },
     ],
     cta: 'Falar com Vendas',
-    ctaLink: '/register',
+    ctaLink: '/contact',
   },
 ]
 
 export default function Pricing() {
+  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'yearly'>('monthly')
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       {/* Header */}
@@ -103,6 +110,33 @@ export default function Pricing() {
           <p className="text-xl text-gray-600 mb-8">
             10x mais rápido. 10x mais barato. Sem contratos anuais.
           </p>
+
+          {/* Billing Toggle */}
+          <div className="flex items-center justify-center gap-4 mb-8">
+            <button
+              onClick={() => setBillingPeriod('monthly')}
+              className={`px-6 py-3 rounded-lg font-semibold transition ${
+                billingPeriod === 'monthly'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Mensal
+            </button>
+            <button
+              onClick={() => setBillingPeriod('yearly')}
+              className={`px-6 py-3 rounded-lg font-semibold transition relative ${
+                billingPeriod === 'yearly'
+                  ? 'bg-purple-600 text-white'
+                  : 'bg-white text-gray-700 hover:bg-gray-100'
+              }`}
+            >
+              Anual
+              <span className="absolute -top-2 -right-2 bg-green-500 text-white text-xs px-2 py-1 rounded-full">
+                2 meses grátis
+              </span>
+            </button>
+          </div>
 
           {/* Comparison with competitors */}
           <div className="inline-flex items-center gap-4 bg-white rounded-xl p-6 shadow-lg">
@@ -153,23 +187,38 @@ export default function Pricing() {
                 <div className="mb-6">
                   <div className="flex items-baseline">
                     <span className="text-5xl font-bold text-gray-900">
-                      {plan.price}
+                      {plan.isPro && billingPeriod === 'yearly'
+                        ? plan.yearlyPrice
+                        : plan.price}
                     </span>
-                    <span className="text-gray-600 ml-2">{plan.period}</span>
+                    <span className="text-gray-600 ml-2">
+                      {plan.isPro && billingPeriod === 'yearly' ? '/ano' : plan.period}
+                    </span>
                   </div>
+                  {plan.isPro && billingPeriod === 'yearly' && (
+                    <p className="text-sm text-green-600 font-semibold mt-2">
+                      Equivale a R$ 33,33/mês
+                    </p>
+                  )}
                 </div>
 
                 {/* CTA Button */}
-                <Link
-                  to={plan.ctaLink}
-                  className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition mb-8 ${
-                    plan.highlighted
-                      ? 'bg-primary-600 text-white hover:bg-primary-700'
-                      : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
-                  }`}
-                >
-                  {plan.cta}
-                </Link>
+                {plan.isPro ? (
+                  <div className="mb-8">
+                    <Checkout plan={billingPeriod} buttonText={plan.cta} />
+                  </div>
+                ) : (
+                  <Link
+                    to={plan.ctaLink || '/register'}
+                    className={`block w-full text-center px-6 py-3 rounded-lg font-semibold transition mb-8 ${
+                      plan.highlighted
+                        ? 'bg-primary-600 text-white hover:bg-primary-700'
+                        : 'bg-gray-100 text-gray-900 hover:bg-gray-200'
+                    }`}
+                  >
+                    {plan.cta}
+                  </Link>
+                )}
 
                 {/* Features List */}
                 <ul className="space-y-3">
