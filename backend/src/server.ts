@@ -8,6 +8,7 @@ import aiRoutes from './routes/ai.routes'
 import contactRoutes from './routes/contact.routes'
 import newsletterRoutes from './routes/newsletter.routes'
 import paymentRoutes from './routes/payment.routes'
+import adminRoutes from './routes/admin.routes'
 import { errorHandler } from './middleware/errorHandler'
 
 dotenv.config()
@@ -40,6 +41,7 @@ app.use('/api/ai', aiRoutes)
 app.use('/api/contact', contactRoutes)
 app.use('/api/newsletter', newsletterRoutes)
 app.use('/api/payments', paymentRoutes)
+app.use('/api/admin', adminRoutes)
 
 // Error handler (must be last)
 app.use(errorHandler)

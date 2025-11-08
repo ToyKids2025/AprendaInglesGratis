@@ -13,7 +13,8 @@ const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Lessons = lazy(() => import('./pages/Lessons'))
 const Profile = lazy(() => import('./pages/Profile'))
 const AIConversation = lazy(() => import('./pages/AIConversation'))
-const Admin = lazy(() => import('./pages/Admin'))
+const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
+const AdminUsers = lazy(() => import('./pages/AdminUsers'))
 const Certificate = lazy(() => import('./pages/Certificate'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
@@ -109,7 +110,15 @@ function App() {
           path="/admin"
           element={
             <ProtectedRoute>
-              <Admin />
+              <AdminDashboard />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/users"
+          element={
+            <ProtectedRoute>
+              <AdminUsers />
             </ProtectedRoute>
           }
         />
