@@ -1,0 +1,112 @@
+/**
+ * ERROR LOGGING & MONITORING SCHEMA
+ * Track errors, performance metrics, and system health
+ */
+
+model ErrorLog {
+  id          String   @id @default(uuid())
+
+  // Error details
+  type        String   // "server", "client", "validation", "database", "external"
+  severity    String   // "low", "medium", "high", "critical"
+  message     String   @db.Text
+  stack       String?  @db.Text
+  code        String?  // HTTP code or custom error code
+
+  // Context
+  endpoint    String?
+  method      String?  // GET, POST, etc.
+  userId      String?
+  userEmail   String?
+
+  // Request data
+  requestBody String?  @db.Text
+  queryParams String?  @db.Text
+  headers     String?  @db.Text
+
+  // Environment
+  environment String   @default("production") // "development", "staging", "production"
+  version     String?
+
+  // Browser/Client info (for client-side errors)
+  browser     String?
+  device      String?
+  os          String?
+  url         String?
+
+  // Status
+  resolved    Boolean  @default(false)
+  resolvedBy  String?
+  resolvedAt  DateTime?
+  notes       String?  @db.Text
+
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([severity])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([resolved])
+}
+
+model PerformanceMetric {
+  id          String   @id @default(uuid())
+
+  // Endpoint info
+  endpoint    String
+  method      String
+
+  // Timing
+  duration    Int      // milliseconds
+  dbQueries   Int      @default(0)
+  dbDuration  Int      @default(0) // milliseconds
+
+  // Request info
+  userId      String?
+  statusCode  Int
+
+  // Memory
+  memoryUsed  Float?   // MB
+  cpuUsage    Float?   // percentage
+
+  // Slow query flag
+  isSlow      Boolean  @default(false) // > 1000ms
+
+  createdAt   DateTime @default(now())
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([endpoint])
+  @@index([isSlow])
+  @@index([createdAt])
+  @@index([duration])
+}
+
+model SystemHealth {
+  id          String   @id @default(uuid())
+
+  // System metrics
+  uptime      Float    // seconds
+  memoryTotal Float    // MB
+  memoryUsed  Float    // MB
+  cpuUsage    Float    // percentage
+
+  // Database
+  dbConnections Int
+  dbResponseTime Float  // ms
+
+  // Application
+  activeUsers    Int   @default(0)
+  requestsPerMin Int   @default(0)
+  errorsPerMin   Int   @default(0)
+
+  // Status
+  status      String   // "healthy", "degraded", "critical"
+
+  createdAt   DateTime @default(now())
+
+  @@index([createdAt])
+  @@index([status])
+}
