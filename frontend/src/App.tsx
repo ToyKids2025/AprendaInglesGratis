@@ -4,6 +4,9 @@ import ProtectedRoute from './components/auth/ProtectedRoute'
 import PublicRoute from './components/auth/PublicRoute'
 import ErrorBoundary from './components/common/ErrorBoundary'
 import SkipLinks from './components/common/SkipLinks'
+import OfflineIndicator from './components/common/OfflineIndicator'
+import PWAInstallPrompt from './components/common/PWAInstallPrompt'
+import { useMobileViewport, usePreventPullToRefresh } from './hooks/useTouch'
 
 // Lazy load pages for better performance and code splitting
 const Home = lazy(() => import('./pages/Home'))
@@ -42,9 +45,15 @@ function PageLoader() {
 }
 
 function App() {
+  // Mobile optimizations
+  useMobileViewport()
+  usePreventPullToRefresh()
+
   return (
     <ErrorBoundary>
       <SkipLinks />
+      <OfflineIndicator />
+      <PWAInstallPrompt />
       <BrowserRouter>
         <Suspense fallback={<PageLoader />}>
           <Routes>

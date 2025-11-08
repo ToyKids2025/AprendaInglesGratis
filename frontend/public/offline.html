@@ -1,0 +1,217 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Offline - English Flow</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      color: #fff;
+    }
+
+    .container {
+      text-align: center;
+      max-width: 500px;
+      background: rgba(255, 255, 255, 0.1);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 40px 30px;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+    }
+
+    .icon {
+      font-size: 80px;
+      margin-bottom: 20px;
+      animation: float 3s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-10px); }
+    }
+
+    h1 {
+      font-size: 32px;
+      margin-bottom: 15px;
+      font-weight: 700;
+    }
+
+    p {
+      font-size: 18px;
+      line-height: 1.6;
+      margin-bottom: 30px;
+      opacity: 0.9;
+    }
+
+    .retry-button {
+      background: #fff;
+      color: #667eea;
+      border: none;
+      padding: 15px 40px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 30px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    }
+
+    .retry-button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+    }
+
+    .retry-button:active {
+      transform: translateY(0);
+    }
+
+    .status {
+      margin-top: 25px;
+      padding-top: 25px;
+      border-top: 1px solid rgba(255, 255, 255, 0.2);
+    }
+
+    .status-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      padding: 8px 20px;
+      background: rgba(255, 255, 255, 0.15);
+      border-radius: 20px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #ff6b6b;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    .status-dot.online {
+      background: #51cf66;
+      animation: none;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    .tips {
+      margin-top: 30px;
+      text-align: left;
+      background: rgba(0, 0, 0, 0.2);
+      padding: 20px;
+      border-radius: 15px;
+    }
+
+    .tips h3 {
+      font-size: 18px;
+      margin-bottom: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .tips ul {
+      list-style: none;
+      padding: 0;
+    }
+
+    .tips li {
+      padding: 8px 0;
+      padding-left: 25px;
+      position: relative;
+      font-size: 14px;
+      opacity: 0.9;
+    }
+
+    .tips li::before {
+      content: '✓';
+      position: absolute;
+      left: 0;
+      color: #51cf66;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="icon">📡</div>
+
+    <h1>Você está offline</h1>
+
+    <p>
+      Parece que você perdeu a conexão com a internet.
+      Verifique sua conexão e tente novamente.
+    </p>
+
+    <button class="retry-button" onclick="location.reload()">
+      🔄 Tentar Novamente
+    </button>
+
+    <div class="status">
+      <div class="status-indicator">
+        <span class="status-dot" id="statusDot"></span>
+        <span id="statusText">Desconectado</span>
+      </div>
+    </div>
+
+    <div class="tips">
+      <h3>💡 Dicas:</h3>
+      <ul>
+        <li>Verifique se o WiFi está ativado</li>
+        <li>Tente alternar para dados móveis</li>
+        <li>Reinicie seu roteador se necessário</li>
+        <li>Algumas funcionalidades podem funcionar offline</li>
+      </ul>
+    </div>
+  </div>
+
+  <script>
+    // Check online status
+    function updateStatus() {
+      const statusDot = document.getElementById('statusDot')
+      const statusText = document.getElementById('statusText')
+
+      if (navigator.onLine) {
+        statusDot.classList.add('online')
+        statusText.textContent = 'Conectado!'
+
+        // Auto-reload when back online
+        setTimeout(() => {
+          location.reload()
+        }, 1000)
+      } else {
+        statusDot.classList.remove('online')
+        statusText.textContent = 'Desconectado'
+      }
+    }
+
+    // Listen for online/offline events
+    window.addEventListener('online', updateStatus)
+    window.addEventListener('offline', updateStatus)
+
+    // Initial check
+    updateStatus()
+
+    // Periodic check
+    setInterval(updateStatus, 3000)
+  </script>
+</body>
+</html>
