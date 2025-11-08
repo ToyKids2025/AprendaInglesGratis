@@ -13,8 +13,9 @@ import { aiService } from '../services/ai.service'
 // ============================================
 
 const startConversationSchema = z.object({
-  scenario: z.string().min(3, 'Scenario must be at least 3 characters'),
-  difficulty: z.number().int().min(1).max(8),
+  scenarioSlug: z.string().min(1, 'Scenario slug is required').optional(),
+  scenario: z.string().min(3, 'Scenario must be at least 3 characters').optional(),
+  difficulty: z.number().int().min(1).max(8).optional(),
 })
 
 const sendMessageSchema = z.object({
@@ -40,7 +41,7 @@ export const startConversation = async (req: Request, res: Response) => {
     const userId = (req as any).userId
 
     // Validar input
-    const { scenario, difficulty } = startConversationSchema.parse(req.body)
+    const { scenarioSlug, scenario: customScenario, difficulty: customDifficulty } = startConversationSchema.parse(req.body)
 
     // Verificar se AI está disponível
     if (!aiService.isReady()) {
@@ -50,23 +51,45 @@ export const startConversation = async (req: Request, res: Response) => {
       })
     }
 
+    let scenarioData
+    let initialMessage: string
+    let scenarioName: string
+    let difficulty: number
+
+    // Try to load scenario from database
+    if (scenarioSlug) {
+      scenarioData = await prisma.conversationScenario.findUnique({
+        where: { slug: scenarioSlug, isActive: true },
+      })
+
+      if (!scenarioData) {
+        return res.status(404).json({
+          success: false,
+          error: 'Scenario not found or inactive',
+        })
+      }
+
+      scenarioName = scenarioData.name
+      difficulty = scenarioData.difficulty
+      initialMessage = scenarioData.initialMessage
+    } else if (customScenario) {
+      // Use custom scenario
+      scenarioName = customScenario
+      difficulty = customDifficulty || 1
+      initialMessage = `Hello! I'm here to practice English with you. Let's talk about: ${customScenario}. Feel free to start the conversation!`
+    } else {
+      return res.status(400).json({
+        success: false,
+        error: 'Either scenarioSlug or scenario must be provided',
+      })
+    }
+
     // Criar conversa no banco
     const conversation = await prisma.aIConversation.create({
       data: {
         userId,
-        scenario,
+        scenario: scenarioName,
         difficulty,
-        messages: [],
-      },
-    })
-
-    // Gerar primeira mensagem da IA
-    const initialMessage = `Hello! I'm here to practice English with you. Let's talk about: ${scenario}. Feel free to start the conversation!`
-
-    // Atualizar com primeira mensagem
-    await prisma.aIConversation.update({
-      where: { id: conversation.id },
-      data: {
         messages: [
           {
             role: 'assistant',
@@ -82,6 +105,8 @@ export const startConversation = async (req: Request, res: Response) => {
       data: {
         conversationId: conversation.id,
         message: initialMessage,
+        scenario: scenarioName,
+        difficulty,
       },
     })
   } catch (error) {

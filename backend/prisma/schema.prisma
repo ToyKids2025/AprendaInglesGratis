@@ -160,6 +160,25 @@ model UserAchievement {
   @@index([userId])
 }
 
+model ConversationScenario {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  description String
+  icon        String
+  difficulty  Int      @default(1) // 1-5
+  systemPrompt String   @db.Text // AI system prompt for this scenario
+  initialMessage String @db.Text // First message from AI
+  isActive    Boolean  @default(true)
+  order       Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([difficulty])
+  @@index([isActive])
+}
+
 model AIConversation {
   id          String    @id @default(uuid())
   userId      String

@@ -27,6 +27,7 @@ const Privacy = lazy(() => import('./pages/Privacy'))
 const Contact = lazy(() => import('./pages/Contact'))
 const Blog = lazy(() => import('./pages/Blog'))
 const BlogPost = lazy(() => import('./pages/BlogPost'))
+const PronunciationPractice = lazy(() => import('./pages/PronunciationPractice'))
 
 // Loading fallback component
 function PageLoader() {
@@ -88,6 +89,14 @@ function App() {
           element={
             <ProtectedRoute>
               <Lessons />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/pronunciation/:categorySlug"
+          element={
+            <ProtectedRoute>
+              <PronunciationPractice />
             </ProtectedRoute>
           }
         />

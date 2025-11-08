@@ -11,6 +11,7 @@ import contactRoutes from './routes/contact.routes'
 import newsletterRoutes from './routes/newsletter.routes'
 import paymentRoutes from './routes/payment.routes'
 import adminRoutes from './routes/admin.routes'
+import scenariosRoutes from './routes/scenarios.routes'
 import { errorHandler } from './middleware/errorHandler'
 import { requestLogger, errorLogger } from './middleware/requestLogger'
 import { rateLimiters } from './middleware/rateLimiter'
@@ -64,6 +65,7 @@ app.use('/api/contact', rateLimiters.contact, contactRoutes)
 app.use('/api/newsletter', rateLimiters.newsletter, newsletterRoutes)
 app.use('/api/payments', rateLimiters.strict, paymentRoutes)
 app.use('/api/admin', rateLimiters.general, adminRoutes)
+app.use('/api/scenarios', rateLimiters.general, scenariosRoutes)
 
 // Error logger (before error handler)
 app.use(errorLogger)
