@@ -1,0 +1,323 @@
+/**
+ * GAMIFICATION & CHALLENGES SCHEMA
+ * Challenges, quests, missions, and competitive features
+ */
+
+model Challenge {
+  id          String   @id @default(uuid())
+
+  type        String   // "daily", "weekly", "special", "community"
+  category    String?  // "phrases", "streak", "xp", "social", "mixed"
+
+  title       String
+  description String   @db.Text
+  icon        String?
+
+  // Requirements
+  targetType  String   // "phrase_count", "xp_amount", "streak_days", "lessons", "reviews"
+  targetValue Int
+
+  // Rewards
+  xpReward    Int      @default(0)
+  coinReward  Int      @default(0)
+  badgeId     String?
+
+  // Timing
+  startDate   DateTime @default(now())
+  endDate     DateTime?
+  duration    Int?     // hours for time-limited challenges
+
+  // Status
+  isActive    Boolean  @default(true)
+  isRepeating Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants UserChallenge[]
+
+  @@index([type])
+  @@index([isActive])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model UserChallenge {
+  id          String   @id @default(uuid())
+
+  userId      String
+  challengeId String
+
+  // Progress
+  progress    Int      @default(0)
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  // Rewards claimed
+  rewardClaimed Boolean @default(false)
+
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   Challenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([isCompleted])
+}
+
+model Quest {
+  id          String   @id @default(uuid())
+
+  title       String
+  description String   @db.Text
+  storyline   String?  @db.Text
+  icon        String?
+
+  // Quest chain
+  questChainId String?
+  order       Int      @default(0)
+
+  // Requirements
+  requiredLevel Int    @default(1)
+  prerequisites Json?  // Array of quest IDs
+
+  // Steps
+  steps       Json     // Array of step objects
+
+  // Rewards
+  xpReward    Int      @default(0)
+  coinReward  Int      @default(0)
+  badgeId     String?
+  unlocksContent Json? // Array of unlockable content IDs
+
+  // Status
+  isActive    Boolean  @default(true)
+  difficulty  String   @default("medium") // "easy", "medium", "hard"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants UserQuest[]
+
+  @@index([questChainId])
+  @@index([isActive])
+  @@index([requiredLevel])
+}
+
+model UserQuest {
+  id          String   @id @default(uuid())
+
+  userId      String
+  questId     String
+
+  // Progress
+  currentStep Int      @default(0)
+  stepsData   Json?    // Progress data for each step
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  startedAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  quest       Quest    @relation(fields: [questId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, questId])
+  @@index([userId])
+  @@index([questId])
+  @@index([isCompleted])
+}
+
+model DailyGoal {
+  id          String   @id @default(uuid())
+
+  userId      String
+  date        DateTime @default(now())
+
+  // Goals
+  phraseGoal  Int      @default(10)
+  xpGoal      Int      @default(100)
+  studyTimeGoal Int    @default(1800) // seconds, default 30 min
+
+  // Progress
+  phrasesCompleted Int @default(0)
+  xpEarned    Int      @default(0)
+  studyTime   Int      @default(0) // seconds
+
+  // Status
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  // Rewards
+  bonusXP     Int      @default(50)
+  bonusCoins  Int      @default(10)
+  rewardClaimed Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+  @@index([isCompleted])
+}
+
+model Badge {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String   @db.Text
+  icon        String?
+  image       String?
+
+  // Rarity
+  rarity      String   @default("common") // "common", "rare", "epic", "legendary"
+  color       String?
+
+  // Unlock criteria
+  criteria    Json     // Object describing unlock requirements
+  isSecret    Boolean  @default(false) // Hidden until earned
+
+  // Stats
+  earnedCount Int      @default(0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([rarity])
+  @@index([isActive])
+}
+
+model Tournament {
+  id          String   @id @default(uuid())
+
+  name        String
+  description String   @db.Text
+  icon        String?
+  image       String?
+
+  // Type
+  type        String   // "xp_race", "phrase_count", "streak_battle"
+
+  // Timing
+  startDate   DateTime
+  endDate     DateTime
+
+  // Rules
+  maxParticipants Int?
+  entryFee    Int      @default(0) // coins
+  minLevel    Int      @default(1)
+
+  // Prizes
+  prizes      Json     // Array of prize tiers
+
+  // Status
+  status      String   @default("upcoming") // "upcoming", "active", "finished"
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants TournamentParticipant[]
+
+  @@index([status])
+  @@index([startDate])
+  @@index([endDate])
+}
+
+model TournamentParticipant {
+  id          String   @id @default(uuid())
+
+  tournamentId String
+  userId      String
+
+  // Score
+  score       Int      @default(0)
+  rank        Int?
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Prizes
+  prizeWon    Json?
+  prizeClaimed Boolean @default(false)
+
+  joinedAt    DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  tournament  Tournament @relation(fields: [tournamentId], references: [id], onDelete: Cascade)
+  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([tournamentId, userId])
+  @@index([tournamentId])
+  @@index([userId])
+  @@index([rank])
+}
+
+model PowerUp {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String   @db.Text
+  icon        String?
+
+  // Effect
+  effectType  String   // "xp_boost", "streak_freeze", "double_coins", "hint"
+  effectValue Float    // Multiplier or value
+  duration    Int?     // minutes, null for instant
+
+  // Cost
+  coinCost    Int
+  premiumOnly Boolean  @default(false)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model UserPowerUp {
+  id          String   @id @default(uuid())
+
+  userId      String
+  powerUpId   String
+
+  quantity    Int      @default(1)
+
+  purchasedAt DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([powerUpId])
+}
+
+model ActivePowerUp {
+  id          String   @id @default(uuid())
+
+  userId      String
+  powerUpType String
+
+  effectValue Float
+  expiresAt   DateTime
+
+  activatedAt DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+}
