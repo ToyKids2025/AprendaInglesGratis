@@ -15,6 +15,7 @@ const Profile = lazy(() => import('./pages/Profile'))
 const AIConversation = lazy(() => import('./pages/AIConversation'))
 const AdminDashboard = lazy(() => import('./pages/AdminDashboard'))
 const AdminUsers = lazy(() => import('./pages/AdminUsers'))
+const AdminContent = lazy(() => import('./pages/AdminContent'))
 const Certificate = lazy(() => import('./pages/Certificate'))
 const Achievements = lazy(() => import('./pages/Achievements'))
 const Leaderboard = lazy(() => import('./pages/Leaderboard'))
@@ -119,6 +120,14 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminUsers />
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/admin/content"
+          element={
+            <ProtectedRoute>
+              <AdminContent />
             </ProtectedRoute>
           }
         />

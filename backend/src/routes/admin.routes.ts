@@ -11,6 +11,12 @@ import {
   deleteUser,
   getAnalytics,
   adminHealthCheck,
+  generateAIPhrases,
+  batchCreatePhrases,
+  getPhrases,
+  updatePhrase,
+  deletePhrase,
+  getCategories,
 } from '../controllers/admin.controller'
 import { authenticateToken } from '../middleware/auth'
 import { requireAdmin } from '../middleware/adminAuth'
@@ -28,6 +34,16 @@ router.delete('/users/:id', deleteUser)
 
 // Analytics
 router.get('/analytics', getAnalytics)
+
+// Phrase management
+router.post('/phrases/generate', generateAIPhrases)
+router.post('/phrases/batch-create', batchCreatePhrases)
+router.get('/phrases', getPhrases)
+router.patch('/phrases/:id', updatePhrase)
+router.delete('/phrases/:id', deletePhrase)
+
+// Categories
+router.get('/categories', getCategories)
 
 // Health check
 router.get('/health', adminHealthCheck)

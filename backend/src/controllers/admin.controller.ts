@@ -392,6 +392,257 @@ export async function adminHealthCheck(req: Request, res: Response) {
   })
 }
 
+/**
+ * POST /api/admin/phrases/generate
+ * Generate phrases using AI
+ */
+export async function generateAIPhrases(req: Request, res: Response) {
+  try {
+    const { category, level, difficulty, count, context } = req.body
+
+    // Validation
+    if (!category || !level || !difficulty || !count) {
+      return res.status(400).json({
+        error: 'Campos obrigatórios: category, level, difficulty, count',
+      })
+    }
+
+    if (count > 50) {
+      return res.status(400).json({
+        error: 'Máximo de 50 frases por vez',
+      })
+    }
+
+    // Import dynamically to avoid circular dependencies
+    const {
+      generatePhrases,
+    } = require('../services/phraseGenerator.service')
+
+    const phrases = await generatePhrases({
+      category,
+      level,
+      difficulty: parseInt(difficulty),
+      count: parseInt(count),
+      context,
+    })
+
+    return res.status(200).json({
+      message: `${phrases.length} frases geradas com sucesso`,
+      phrases,
+    })
+  } catch (error: any) {
+    console.error('Error generating phrases:', error)
+    return res.status(500).json({
+      error: 'Erro ao gerar frases',
+      message: error.message,
+    })
+  }
+}
+
+/**
+ * POST /api/admin/phrases/batch-create
+ * Create multiple phrases in batch
+ */
+export async function batchCreatePhrases(req: Request, res: Response) {
+  try {
+    const { categoryId, phrases } = req.body
+
+    if (!categoryId || !Array.isArray(phrases) || phrases.length === 0) {
+      return res.status(400).json({
+        error: 'categoryId e phrases array são obrigatórios',
+      })
+    }
+
+    // Get next order number for this category
+    const lastPhrase = await prisma.phrase.findFirst({
+      where: { categoryId: parseInt(categoryId) },
+      orderBy: { order: 'desc' },
+      select: { order: true },
+    })
+
+    const startOrder = (lastPhrase?.order || 0) + 1
+
+    // Create phrases
+    const created = await Promise.all(
+      phrases.map((phrase: any, index: number) =>
+        prisma.phrase.create({
+          data: {
+            categoryId: parseInt(categoryId),
+            en: phrase.en,
+            pt: phrase.pt,
+            tip: phrase.tip || null,
+            difficulty: phrase.difficulty || 1,
+            order: startOrder + index,
+          },
+        })
+      )
+    )
+
+    return res.status(201).json({
+      message: `${created.length} frases criadas com sucesso`,
+      phrases: created,
+    })
+  } catch (error) {
+    console.error('Error batch creating phrases:', error)
+    return res.status(500).json({ error: 'Erro ao criar frases' })
+  }
+}
+
+/**
+ * GET /api/admin/phrases
+ * Get phrases with filters
+ */
+export async function getPhrases(req: Request, res: Response) {
+  try {
+    const { categoryId, difficulty, search, page = '1', limit = '50' } = req.query
+
+    const pageNum = parseInt(page as string)
+    const limitNum = parseInt(limit as string)
+    const skip = (pageNum - 1) * limitNum
+
+    const where: any = {}
+
+    if (categoryId) {
+      where.categoryId = parseInt(categoryId as string)
+    }
+
+    if (difficulty) {
+      where.difficulty = parseInt(difficulty as string)
+    }
+
+    if (search) {
+      where.OR = [
+        { en: { contains: search as string, mode: 'insensitive' } },
+        { pt: { contains: search as string, mode: 'insensitive' } },
+      ]
+    }
+
+    const [phrases, total] = await Promise.all([
+      prisma.phrase.findMany({
+        where,
+        skip,
+        take: limitNum,
+        include: {
+          category: {
+            select: {
+              name: true,
+              level: {
+                select: {
+                  name: true,
+                  number: true,
+                },
+              },
+            },
+          },
+        },
+        orderBy: [{ categoryId: 'asc' }, { order: 'asc' }],
+      }),
+      prisma.phrase.count({ where }),
+    ])
+
+    return res.status(200).json({
+      phrases,
+      pagination: {
+        page: pageNum,
+        limit: limitNum,
+        total,
+        pages: Math.ceil(total / limitNum),
+      },
+    })
+  } catch (error) {
+    console.error('Error fetching phrases:', error)
+    return res.status(500).json({ error: 'Erro ao buscar frases' })
+  }
+}
+
+/**
+ * PATCH /api/admin/phrases/:id
+ * Update a phrase
+ */
+export async function updatePhrase(req: Request, res: Response) {
+  try {
+    const { id } = req.params
+    const { en, pt, tip, difficulty, order } = req.body
+
+    const updateData: any = {}
+
+    if (en) updateData.en = en
+    if (pt) updateData.pt = pt
+    if (tip !== undefined) updateData.tip = tip
+    if (difficulty) updateData.difficulty = parseInt(difficulty)
+    if (order) updateData.order = parseInt(order)
+
+    const phrase = await prisma.phrase.update({
+      where: { id: parseInt(id) },
+      data: updateData,
+      include: {
+        category: {
+          select: { name: true },
+        },
+      },
+    })
+
+    return res.status(200).json({
+      message: 'Frase atualizada com sucesso',
+      phrase,
+    })
+  } catch (error) {
+    console.error('Error updating phrase:', error)
+    return res.status(500).json({ error: 'Erro ao atualizar frase' })
+  }
+}
+
+/**
+ * DELETE /api/admin/phrases/:id
+ * Delete a phrase
+ */
+export async function deletePhrase(req: Request, res: Response) {
+  try {
+    const { id } = req.params
+
+    await prisma.phrase.delete({
+      where: { id: parseInt(id) },
+    })
+
+    return res.status(200).json({
+      message: 'Frase removida com sucesso',
+    })
+  } catch (error) {
+    console.error('Error deleting phrase:', error)
+    return res.status(500).json({ error: 'Erro ao remover frase' })
+  }
+}
+
+/**
+ * GET /api/admin/categories
+ * Get all categories with levels
+ */
+export async function getCategories(req: Request, res: Response) {
+  try {
+    const categories = await prisma.category.findMany({
+      include: {
+        level: {
+          select: {
+            name: true,
+            number: true,
+          },
+        },
+        _count: {
+          select: {
+            phrases: true,
+          },
+        },
+      },
+      orderBy: [{ levelId: 'asc' }, { order: 'asc' }],
+    })
+
+    return res.status(200).json({ categories })
+  } catch (error) {
+    console.error('Error fetching categories:', error)
+    return res.status(500).json({ error: 'Erro ao buscar categorias' })
+  }
+}
+
 export default {
   getUsers,
   getUserDetails,
@@ -399,4 +650,10 @@ export default {
   deleteUser,
   getAnalytics,
   adminHealthCheck,
+  generateAIPhrases,
+  batchCreatePhrases,
+  getPhrases,
+  updatePhrase,
+  deletePhrase,
+  getCategories,
 }
