@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: GitHub Discussions
+    url: https://github.com/ToyKids2025/AprendaInglesGratis/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: Documentation
+    url: https://github.com/ToyKids2025/AprendaInglesGratis#readme
+    about: Read the documentation and guides
+  - name: Email Support
+    url: mailto:suporte@englishflow.com
+    about: Contact support team directly

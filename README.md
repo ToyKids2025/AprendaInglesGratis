@@ -3,8 +3,8 @@
 > Aprenda inglês **10x mais rápido** e **10x mais barato** com IA conversacional
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Status](https://img.shields.io/badge/Status-MVP-green)]()
-[![Progress](https://img.shields.io/badge/Progress-90%25-blue)]()
+[![Status](https://img.shields.io/badge/Status-Beta_Ready-green)]()
+[![Progress](https://img.shields.io/badge/Progress-22%25_(20/90_days)-blue)]()
 
 ---
 
