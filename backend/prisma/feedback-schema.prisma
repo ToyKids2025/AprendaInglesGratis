@@ -1,0 +1,64 @@
+/**
+ * FEEDBACK SCHEMA
+ * Add to Prisma schema for user feedback tracking
+ */
+
+model Feedback {
+  id          String   @id @default(uuid())
+  userId      String?
+  type        String   // "bug", "feature", "improvement", "general"
+  category    String?  // "ui", "performance", "content", "audio", "other"
+  title       String
+  description String   @db.Text
+  rating      Int?     // 1-5 stars
+  status      String   @default("new") // "new", "reviewing", "planned", "completed", "rejected"
+  priority    String   @default("medium") // "low", "medium", "high", "critical"
+
+  // System info
+  browser     String?
+  device      String?
+  os          String?
+  version     String?
+
+  // Admin response
+  adminNotes  String?  @db.Text
+  resolvedAt  DateTime?
+  resolvedBy  String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([type])
+  @@index([status])
+  @@index([createdAt])
+}
+
+model Survey {
+  id          String   @id @default(uuid())
+  userId      String
+  surveyType  String   // "onboarding", "weekly", "cancellation", "nps"
+
+  // Responses (JSON)
+  responses   Json
+
+  // NPS specific
+  npsScore    Int?     // 0-10
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([surveyType])
+  @@index([createdAt])
+}
+
+// Update User model to include feedback relation
+model User {
+  // ... existing fields
+  feedback    Feedback[]
+  surveys     Survey[]
+}
