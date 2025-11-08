@@ -3,6 +3,7 @@
  * Blog listing with articles for SEO and content marketing
  */
 
+import { useState } from 'react'
 import { Link } from 'react-router-dom'
 import { Calendar, Clock, ArrowRight, TrendingUp, Zap, Target } from 'lucide-react'
 
@@ -100,6 +101,53 @@ const blogPosts: BlogPost[] = [
 const categories = ['Todos', 'Aprendizado', 'Tecnologia', 'Fluência', 'Carreira', 'Metodologia', 'Comparação']
 
 export default function Blog() {
+  const [newsletterEmail, setNewsletterEmail] = useState('')
+  const [newsletterStatus, setNewsletterStatus] = useState<'idle' | 'loading' | 'success' | 'error'>('idle')
+  const [newsletterMessage, setNewsletterMessage] = useState('')
+
+  const handleNewsletterSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!newsletterEmail.trim()) {
+      setNewsletterStatus('error')
+      setNewsletterMessage('Por favor, insira seu email')
+      return
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(newsletterEmail)) {
+      setNewsletterStatus('error')
+      setNewsletterMessage('Por favor, insira um email válido')
+      return
+    }
+
+    setNewsletterStatus('loading')
+
+    try {
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/api/newsletter/subscribe`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: newsletterEmail }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setNewsletterStatus('success')
+        setNewsletterMessage(data.message || 'Inscrição realizada com sucesso! Confira seu email.')
+        setNewsletterEmail('')
+      } else {
+        setNewsletterStatus('error')
+        setNewsletterMessage(data.error || 'Erro ao processar inscrição')
+      }
+    } catch (error) {
+      setNewsletterStatus('error')
+      setNewsletterMessage('Erro ao conectar com o servidor')
+    }
+  }
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50">
       {/* Header */}
@@ -288,19 +336,40 @@ export default function Blog() {
             Dicas semanais, estudos de caso e estratégias para acelerar seu inglês.
             100% gratuito, sem spam.
           </p>
-          <div className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
-            <input
-              type="email"
-              placeholder="Seu melhor email"
-              className="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300"
-            />
-            <button className="bg-white text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition">
-              Inscrever-se Grátis
-            </button>
-          </div>
-          <p className="text-sm text-purple-200 mt-4">
-            Junte-se a 5.000+ estudantes que já recebem nossos emails.
-          </p>
+
+          {newsletterStatus === 'success' ? (
+            <div className="bg-green-100 text-green-800 px-6 py-4 rounded-lg max-w-xl mx-auto">
+              <p className="font-semibold">✅ {newsletterMessage}</p>
+            </div>
+          ) : (
+            <form onSubmit={handleNewsletterSubmit} className="flex flex-col sm:flex-row gap-4 justify-center max-w-xl mx-auto">
+              <input
+                type="email"
+                placeholder="Seu melhor email"
+                value={newsletterEmail}
+                onChange={(e) => setNewsletterEmail(e.target.value)}
+                className="flex-1 px-6 py-4 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-purple-300"
+                disabled={newsletterStatus === 'loading'}
+              />
+              <button
+                type="submit"
+                className="bg-white text-primary-600 px-8 py-4 rounded-lg font-bold text-lg hover:bg-gray-100 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                disabled={newsletterStatus === 'loading'}
+              >
+                {newsletterStatus === 'loading' ? 'Inscrevendo...' : 'Inscrever-se Grátis'}
+              </button>
+            </form>
+          )}
+
+          {newsletterStatus === 'error' && (
+            <p className="text-red-200 mt-4 font-semibold">❌ {newsletterMessage}</p>
+          )}
+
+          {newsletterStatus !== 'success' && (
+            <p className="text-sm text-purple-200 mt-4">
+              Junte-se a 5.000+ estudantes que já recebem nossos emails.
+            </p>
+          )}
         </div>
       </main>
 

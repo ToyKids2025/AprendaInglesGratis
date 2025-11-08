@@ -185,3 +185,27 @@ model Payment {
   @@index([userId])
   @@index([status])
 }
+
+model NewsletterSubscriber {
+  id             String    @id @default(uuid())
+  email          String    @unique
+  name           String?
+  active         Boolean   @default(true)
+  subscribedAt   DateTime  @default(now())
+  unsubscribedAt DateTime?
+
+  @@index([email])
+  @@index([active])
+}
+
+model NewsletterCampaign {
+  id             String   @id @default(uuid())
+  subject        String
+  content        String   @db.Text
+  sentAt         DateTime @default(now())
+  recipientCount Int
+  successCount   Int
+  failureCount   Int
+
+  @@index([sentAt])
+}

@@ -477,6 +477,44 @@ export const emailTemplates = {
       `,
     }),
   }),
+
+  [EmailType.NEWSLETTER]: (data: { name: string; message: string }) => ({
+    subject: 'Bem-vindo à Newsletter do English Flow! 📧',
+    html: EmailLayout({
+      preheader: 'Você se inscreveu na newsletter do English Flow!',
+      children: `
+        <h2>Olá ${data.name}! 🎉</h2>
+        <p>Bem-vindo à newsletter do <strong>English Flow</strong>! Você acaba de se juntar a mais de <strong>5.000+ estudantes</strong> que recebem dicas, estratégias e conteúdo exclusivo sobre aprendizado de inglês.</p>
+
+        <div class="stats">
+          <div class="stats-item">📧 <strong>Frequência:</strong> Emails semanais (toda sexta-feira)</div>
+          <div class="stats-item">📚 <strong>Conteúdo:</strong> Dicas, estudos de caso, novidades</div>
+          <div class="stats-item">🎁 <strong>Bônus:</strong> Ofertas exclusivas para assinantes</div>
+          <div class="stats-item">❌ <strong>Spam:</strong> Zero! Apenas conteúdo de valor</div>
+        </div>
+
+        <h3>O que você vai receber:</h3>
+        <ul style="margin-left: 20px; margin-bottom: 15px;">
+          <li>✅ Dicas semanais para acelerar seu aprendizado</li>
+          <li>✅ Estudos de caso de alunos que alcançaram fluência</li>
+          <li>✅ Novos artigos do blog antes de todos</li>
+          <li>✅ Ofertas e promoções exclusivas</li>
+          <li>✅ Recursos gratuitos (PDFs, checklists, guias)</li>
+        </ul>
+
+        <div class="divider"></div>
+
+        <p><strong>Primeiro passo:</strong> Que tal criar sua conta grátis e começar a estudar hoje?</p>
+        <a href="https://englishflow.vercel.app/register" class="button">Criar Conta Grátis 🚀</a>
+
+        <p style="margin-top: 30px;">Nos vemos na próxima sexta-feira! 📬<br><strong>Equipe English Flow</strong></p>
+
+        <p style="font-size: 12px; color: #9ca3af; margin-top: 30px;">
+          Se você não deseja mais receber nossos emails, pode <a href="https://englishflow.vercel.app/unsubscribe">cancelar a inscrição aqui</a>.
+        </p>
+      `,
+    }),
+  }),
 }
 
 // Main send email function
