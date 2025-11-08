@@ -105,6 +105,8 @@ model Phrase {
 
   @@index([categoryId])
   @@index([difficulty])
+  @@index([categoryId, order]) // Compound index for ordered category queries
+  @@index([categoryId, difficulty]) // For filtering by category and difficulty
 }
 
 model UserProgress {
@@ -126,6 +128,8 @@ model UserProgress {
   @@unique([userId, phraseId])
   @@index([userId])
   @@index([nextReviewAt])
+  @@index([userId, mastery]) // For filtering user progress by mastery level
+  @@index([userId, lastReviewAt]) // For finding recently reviewed phrases
 }
 
 model Achievement {

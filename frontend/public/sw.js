@@ -1,13 +1,14 @@
 // Service Worker for PWA
 // Enables offline functionality and caching
 
-const CACHE_NAME = 'english-flow-v1'
+const CACHE_NAME = 'english-flow-v2'
+const API_CACHE_NAME = 'english-flow-api-v1'
 const urlsToCache = [
   '/',
   '/index.html',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
+  '/logo-192.png',
+  '/logo-512.png',
 ]
 
 // Install event - cache resources
@@ -27,7 +28,7 @@ self.addEventListener('activate', (event) => {
     caches.keys().then((cacheNames) => {
       return Promise.all(
         cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
+          if (cacheName !== CACHE_NAME && cacheName !== API_CACHE_NAME) {
             console.log('Deleting old cache:', cacheName)
             return caches.delete(cacheName)
           }
@@ -50,16 +51,33 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
-          // Clone response to cache it
-          const responseToCache = response.clone()
-          caches.open(CACHE_NAME).then((cache) => {
-            cache.put(event.request, responseToCache)
-          })
+          // Only cache successful GET requests
+          if (response.status === 200 && event.request.method === 'GET') {
+            const responseToCache = response.clone()
+            caches.open(API_CACHE_NAME).then((cache) => {
+              cache.put(event.request, responseToCache)
+            })
+          }
           return response
         })
         .catch(() => {
           // If network fails, try cache
-          return caches.match(event.request)
+          return caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+              return cachedResponse
+            }
+            // Return offline error response
+            return new Response(
+              JSON.stringify({
+                error: 'Offline',
+                message: 'Você está offline. Verifique sua conexão.',
+              }),
+              {
+                status: 503,
+                headers: { 'Content-Type': 'application/json' },
+              }
+            )
+          })
         })
     )
     return
