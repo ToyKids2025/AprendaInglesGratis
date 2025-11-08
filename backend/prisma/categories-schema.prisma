@@ -1,0 +1,201 @@
+/**
+ * CATEGORIES & TAGS SCHEMA
+ * Advanced content organization and filtering
+ */
+
+model Category {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?  // Icon name or emoji
+  color       String?  // Hex color code
+
+  // Hierarchy
+  parentId    String?
+  order       Int      @default(0)
+
+  // Stats
+  phraseCount Int      @default(0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  parent      Category?      @relation("CategoryHierarchy", fields: [parentId], references: [id], onDelete: SetNull)
+  children    Category[]     @relation("CategoryHierarchy")
+  phrases     PhraseCategory[]
+
+  @@index([parentId])
+  @@index([slug])
+  @@index([isActive])
+}
+
+model Tag {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+
+  // Stats
+  usageCount  Int      @default(0)
+
+  createdAt   DateTime @default(now())
+
+  phrases     PhraseTag[]
+
+  @@index([slug])
+  @@index([usageCount])
+}
+
+model PhraseCategory {
+  id          String   @id @default(uuid())
+
+  phraseId    String
+  categoryId  String
+
+  createdAt   DateTime @default(now())
+
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  category    Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@unique([phraseId, categoryId])
+  @@index([phraseId])
+  @@index([categoryId])
+}
+
+model PhraseTag {
+  id          String   @id @default(uuid())
+
+  phraseId    String
+  tagId       String
+
+  createdAt   DateTime @default(now())
+
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  tag         Tag      @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@unique([phraseId, tagId])
+  @@index([phraseId])
+  @@index([tagId])
+}
+
+model Topic {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+  color       String?
+
+  // Organization
+  categoryId  String?
+  level       String?  // "beginner", "intermediate", "advanced"
+
+  // Stats
+  phraseCount Int      @default(0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  phrases     PhraseTopic[]
+
+  @@index([categoryId])
+  @@index([slug])
+  @@index([level])
+  @@index([isActive])
+}
+
+model PhraseTopic {
+  id          String   @id @default(uuid())
+
+  phraseId    String
+  topicId     String
+
+  createdAt   DateTime @default(now())
+
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  topic       Topic    @relation(fields: [topicId], references: [id], onDelete: Cascade)
+
+  @@unique([phraseId, topicId])
+  @@index([phraseId])
+  @@index([topicId])
+}
+
+model Situation {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  slug        String   @unique
+  description String?  @db.Text
+  icon        String?
+
+  // Context
+  formality   String?  // "informal", "neutral", "formal"
+  setting     String?  // "business", "casual", "academic", "travel"
+
+  // Stats
+  phraseCount Int      @default(0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  phrases     PhraseSituation[]
+
+  @@index([slug])
+  @@index([formality])
+  @@index([setting])
+  @@index([isActive])
+}
+
+model PhraseSituation {
+  id          String   @id @default(uuid())
+
+  phraseId    String
+  situationId String
+
+  createdAt   DateTime @default(now())
+
+  phrase      Phrase      @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+  situation   Situation   @relation(fields: [situationId], references: [id], onDelete: Cascade)
+
+  @@unique([phraseId, situationId])
+  @@index([phraseId])
+  @@index([situationId])
+}
+
+model SavedSearch {
+  id          String   @id @default(uuid())
+
+  userId      String
+  name        String
+
+  // Filter parameters
+  query       String?
+  categoryIds Json?    // Array of category IDs
+  tagIds      Json?    // Array of tag IDs
+  topicIds    Json?    // Array of topic IDs
+  situationIds Json?   // Array of situation IDs
+  level       String?
+  difficulty  String?
+
+  // Metadata
+  resultCount Int      @default(0)
+  lastUsed    DateTime @default(now())
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([lastUsed])
+}
