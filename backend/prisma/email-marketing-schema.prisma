@@ -1,0 +1,195 @@
+/**
+ * EMAIL MARKETING SCHEMA
+ * Campaigns, drip sequences, and automation
+ */
+
+model EmailCampaign {
+  id          String   @id @default(uuid())
+
+  name        String
+  subject     String
+  htmlContent String   @db.Text
+  textContent String?  @db.Text
+
+  // Targeting
+  segment     String?  // "all", "premium", "free", "inactive", "custom"
+  customQuery Json?    // Custom filter criteria
+
+  // Scheduling
+  status      String   @default("draft") // "draft", "scheduled", "sending", "sent", "paused"
+  scheduledFor DateTime?
+  sentAt      DateTime?
+
+  // Stats
+  recipientCount Int   @default(0)
+  openCount      Int   @default(0)
+  clickCount     Int   @default(0)
+  unsubscribeCount Int @default(0)
+
+  // Settings
+  fromName    String   @default("English Flow")
+  fromEmail   String   @default("noreply@englishflow.com")
+  replyTo     String?
+
+  createdBy   String
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  logs        EmailLog[]
+
+  @@index([status])
+  @@index([scheduledFor])
+  @@index([createdAt])
+}
+
+model EmailLog {
+  id          String   @id @default(uuid())
+
+  campaignId  String?
+  userId      String?
+
+  type        String   // "campaign", "transactional", "drip"
+  subject     String
+  recipient   String
+
+  status      String   @default("pending") // "pending", "sent", "delivered", "opened", "clicked", "bounced", "failed"
+
+  // Tracking
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  bouncedAt   DateTime?
+
+  // Metadata
+  errorMessage String?  @db.Text
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+
+  campaign    EmailCampaign? @relation(fields: [campaignId], references: [id], onDelete: SetNull)
+  user        User?          @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([campaignId])
+  @@index([userId])
+  @@index([status])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model DripSequence {
+  id          String   @id @default(uuid())
+
+  name        String
+  description String?  @db.Text
+  trigger     String   // "signup", "premium_purchase", "inactivity", "level_up"
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  steps       DripStep[]
+
+  @@index([trigger])
+  @@index([isActive])
+}
+
+model DripStep {
+  id          String   @id @default(uuid())
+
+  sequenceId  String
+  order       Int
+
+  // Email content
+  name        String
+  subject     String
+  htmlContent String   @db.Text
+  textContent String?  @db.Text
+
+  // Timing
+  delayDays   Int      @default(0)
+  delayHours  Int      @default(0)
+
+  // Conditions
+  conditions  Json?    // Optional conditions to send this step
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sequence    DripSequence @relation(fields: [sequenceId], references: [id], onDelete: Cascade)
+
+  @@unique([sequenceId, order])
+  @@index([sequenceId])
+}
+
+model UserDripProgress {
+  id          String   @id @default(uuid())
+
+  userId      String
+  sequenceId  String
+  currentStep Int      @default(0)
+
+  status      String   @default("active") // "active", "completed", "paused"
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  pausedAt    DateTime?
+
+  nextStepAt  DateTime? // When to send next email
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, sequenceId])
+  @@index([userId])
+  @@index([sequenceId])
+  @@index([status])
+  @@index([nextStepAt])
+}
+
+model EmailTemplate {
+  id          String   @id @default(uuid())
+
+  name        String   @unique
+  subject     String
+  htmlContent String   @db.Text
+  textContent String?  @db.Text
+
+  // Variables that can be used
+  variables   Json     // Array of variable names like ["name", "streak", "xp"]
+
+  category    String?  // "welcome", "notification", "marketing", "transactional"
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([category])
+  @@index([isActive])
+}
+
+model EmailSubscriber {
+  id          String   @id @default(uuid())
+
+  email       String   @unique
+  name        String?
+
+  // Subscription preferences
+  isSubscribed Boolean @default(true)
+  subscribedAt DateTime @default(now())
+  unsubscribedAt DateTime?
+
+  // Segments
+  segments    Json?    // Array of segment IDs
+
+  // Metadata
+  source      String?  // "signup", "landing_page", "import"
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([email])
+  @@index([isSubscribed])
+}
