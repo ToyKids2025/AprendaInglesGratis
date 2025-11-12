@@ -1,0 +1,250 @@
+/**
+ * VOICE RECOGNITION & PRONUNCIATION SCHEMA
+ * Speech-to-text, pronunciation analysis, and voice practice tracking
+ */
+
+model PronunciationAttempt {
+  id          String   @id @default(uuid())
+
+  userId      String
+  phraseId    String
+
+  // Audio data
+  audioUrl    String?  // S3/Cloud storage URL
+  audioDuration Float  // Seconds
+  audioFormat String?  // "wav", "mp3", "webm"
+
+  // Transcription
+  transcribedText String
+  expectedText    String
+
+  // Analysis results
+  pronunciationScore Int    // 0-100
+  accuracyScore      Float  // 0.0-1.0
+  fluencyScore       Float? // 0.0-1.0
+  completenessScore  Float? // 0.0-1.0
+
+  // Detailed feedback
+  wordScores         Json?  // Array of { word, score, issues }
+  phonemeAnalysis    Json?  // Phoneme-level analysis
+  commonMistakes     Json?  // Array of detected mistakes
+
+  // Performance level
+  level       String   // "excellent", "good", "fair", "poor"
+  feedback    String   @db.Text // User-friendly feedback message
+
+  // Context
+  attemptNumber Int    @default(1) // Which attempt for this phrase
+  studySessionId String?
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phraseId])
+  @@index([pronunciationScore])
+  @@index([createdAt])
+}
+
+model VoiceSettings {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Speech recognition settings
+  language    String   @default("en-US")
+  dialect     String?  // "en-US", "en-GB", "en-AU", etc.
+
+  // Pronunciation preferences
+  strictMode  Boolean  @default(false) // Require higher accuracy
+  minScore    Int      @default(70)    // Minimum acceptable score
+
+  // Audio settings
+  noiseReduction Boolean @default(true)
+  autoGainControl Boolean @default(true)
+  echoCancellation Boolean @default(true)
+
+  // Practice settings
+  enableHints Boolean  @default(true)
+  showPhonetics Boolean @default(true)
+  playbackSpeed Float   @default(1.0) // 0.5x to 2.0x
+
+  // Analytics
+  totalAttempts Int     @default(0)
+  averageScore  Float   @default(0.0)
+  bestScore     Int     @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model PronunciationProgress {
+  id          String   @id @default(uuid())
+
+  userId      String
+  phraseId    String
+
+  // Progress tracking
+  firstAttemptScore Int
+  lastAttemptScore  Int
+  bestScore         Int
+  averageScore      Float
+
+  attemptCount      Int      @default(0)
+  masteryAchieved   Boolean  @default(false)
+  masteryDate       DateTime?
+
+  // Improvement tracking
+  improvementRate   Float    @default(0.0) // Percentage improvement
+  practiceTime      Int      @default(0)   // Total seconds practicing
+
+  // Weak areas
+  difficultWords    Json?    // Array of words needing practice
+  phonemeIssues     Json?    // Phonemes causing trouble
+
+  lastPracticed DateTime  @default(now())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, phraseId])
+  @@index([userId])
+  @@index([phraseId])
+  @@index([masteryAchieved])
+}
+
+model VoiceChallenge {
+  id          String   @id @default(uuid())
+
+  name        String
+  description String?  @db.Text
+
+  // Challenge configuration
+  difficulty  String   // "beginner", "intermediate", "advanced"
+  phraseIds   Json     // Array of phrase IDs
+  timeLimit   Int?     // Seconds (null = no limit)
+  minScore    Int      @default(80) // Required score to pass
+
+  // Requirements
+  requirePerfect Boolean @default(false) // Must get 100% on all phrases
+  allowRetries Boolean  @default(true)
+  maxAttempts  Int?     // null = unlimited
+
+  // Rewards
+  xpReward    Int      @default(0)
+  badgeId     String?
+
+  // Stats
+  participantCount Int  @default(0)
+  completionRate   Float @default(0.0)
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  participants UserChallengeProgress[]
+
+  @@index([difficulty])
+  @@index([isActive])
+}
+
+model UserChallengeProgress {
+  id          String   @id @default(uuid())
+
+  userId      String
+  challengeId String
+
+  status      String   @default("in_progress") // "in_progress", "completed", "failed", "abandoned"
+
+  // Progress
+  completedPhrases Json  @default("[]") // Array of phrase IDs
+  phraseScores     Json  @default("{}") // Map of phraseId -> score
+
+  currentAttempt   Int   @default(1)
+  bestScore        Int   @default(0)
+  averageScore     Float @default(0.0)
+
+  // Timing
+  startedAt    DateTime  @default(now())
+  completedAt  DateTime?
+  timeSpent    Int       @default(0) // Seconds
+
+  // Rewards claimed
+  xpEarned     Int       @default(0)
+  badgeEarned  Boolean   @default(false)
+
+  user        User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  challenge   VoiceChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([userId])
+  @@index([challengeId])
+  @@index([status])
+}
+
+model PhonemeLibrary {
+  id          String   @id @default(uuid())
+
+  // Phoneme info
+  symbol      String   @unique // IPA symbol
+  example     String   // Example word
+  soundFile   String?  // Audio file URL
+
+  // Classification
+  category    String   // "vowel", "consonant", "diphthong"
+  manner      String?  // "plosive", "fricative", "nasal", etc.
+  place       String?  // "bilabial", "alveolar", "velar", etc.
+
+  // Difficulty
+  difficulty  String   // "easy", "medium", "hard"
+  commonMistakes Json? // Array of common pronunciation errors
+
+  // Usage
+  phrases     Json     // Array of phrase IDs using this phoneme
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([symbol])
+  @@index([category])
+  @@index([difficulty])
+}
+
+model SpeechAnalytics {
+  id          String   @id @default(uuid())
+
+  userId      String
+  date        DateTime @default(now())
+
+  // Daily stats
+  attemptsToday    Int   @default(0)
+  averageScore     Float @default(0.0)
+  practiceTime     Int   @default(0) // Seconds
+  phrasesCompleted Int   @default(0)
+
+  // Performance
+  improvementRate  Float @default(0.0)
+  currentStreak    Int   @default(0)
+
+  // Categories
+  topCategory      String?
+  weakestCategory  String?
+
+  // Metadata
+  metadata         Json? // Additional analytics data
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, date])
+  @@index([userId])
+  @@index([date])
+}
