@@ -1,0 +1,217 @@
+/**
+ * AI CONTENT RECOMMENDATION SCHEMA
+ * Personalized learning recommendations and user preferences
+ */
+
+model RecommendationEngine {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Learning preferences
+  preferredDifficulty String?  // "beginner", "intermediate", "advanced"
+  preferredTopics     Json     // Array of preferred topic IDs
+  learningGoals       Json?    // ["conversation", "business", "travel", "academic"]
+  studyTime           String?  // "morning", "afternoon", "evening", "night"
+  sessionDuration     Int      @default(15) // Minutes per session
+
+  // Performance tracking
+  strongCategories    Json?    // Categories user excels at
+  weakCategories      Json?    // Categories needing improvement
+  averageAccuracy     Float    @default(0.0)
+
+  // Recommendation settings
+  enableAI            Boolean  @default(true)
+  diversityLevel      Float    @default(0.5) // 0.0 = focused, 1.0 = diverse
+  challengeLevel      Float    @default(0.5) // 0.0 = easy, 1.0 = hard
+
+  lastRecommendation  DateTime?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model RecommendationLog {
+  id          String   @id @default(uuid())
+
+  userId      String
+  phraseId    String
+
+  // Recommendation context
+  reason      String   // "weak_category", "new_topic", "spaced_repetition", "trending", "similar_to_liked"
+  confidence  Float    // 0.0 to 1.0
+  position    Int      // Position in recommendation list
+
+  // User interaction
+  wasAccepted Boolean? // Null = not shown yet, true = studied, false = skipped
+  studiedAt   DateTime?
+  accuracy    Float?   // How well user performed (0.0 to 1.0)
+
+  // Metadata
+  algorithm   String   // "collaborative", "content_based", "hybrid", "spaced_repetition"
+  metadata    Json?    // Additional context
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phraseId])
+  @@index([wasAccepted])
+  @@index([createdAt])
+}
+
+model UserPreference {
+  id          String   @id @default(uuid())
+
+  userId      String
+
+  // Content preferences (learned from behavior)
+  likedCategories     Json     // Array of category IDs
+  dislikedCategories  Json     // Array of category IDs
+  likedTopics         Json     // Array of topic IDs
+  neutralTopics       Json     // Array of topic IDs
+
+  // Difficulty preferences
+  preferredDifficulty String   @default("intermediate")
+  adaptiveDifficulty  Boolean  @default(true) // Adjust based on performance
+
+  // Learning style
+  preferVisual        Boolean  @default(false)
+  preferAudio         Boolean  @default(false)
+  preferReading       Boolean  @default(true)
+  preferExamples      Boolean  @default(true)
+
+  // Content discovery
+  exploreNewTopics    Boolean  @default(true)
+  repeatMistakes      Boolean  @default(true)
+
+  lastUpdated DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId])
+  @@index([userId])
+}
+
+model RecommendationFeedback {
+  id          String   @id @default(uuid())
+
+  userId      String
+  phraseId    String
+
+  // User feedback
+  rating      Int?     // 1-5 stars
+  isRelevant  Boolean? // Is this recommendation relevant?
+  isTooEasy   Boolean?
+  isTooHard   Boolean?
+  isInteresting Boolean?
+
+  // Explicit feedback
+  comment     String?  @db.Text
+
+  // Context
+  recommendationId String? // Link to RecommendationLog
+
+  createdAt   DateTime @default(now())
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phrase      Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([phraseId])
+  @@index([recommendationId])
+}
+
+model SimilarPhrase {
+  id          String   @id @default(uuid())
+
+  phraseId    String   // Source phrase
+  similarId   String   // Similar phrase
+
+  // Similarity metrics
+  similarity  Float    // 0.0 to 1.0
+  method      String   // "content", "usage", "context", "semantic"
+
+  // Weights
+  semanticScore  Float?
+  contextScore   Float?
+  difficultyScore Float?
+
+  computedAt  DateTime @default(now())
+
+  phrase      Phrase   @relation("SourcePhrase", fields: [phraseId], references: [id], onDelete: Cascade)
+  similar     Phrase   @relation("SimilarPhrase", fields: [similarId], references: [id], onDelete: Cascade)
+
+  @@unique([phraseId, similarId])
+  @@index([phraseId])
+  @@index([similarId])
+  @@index([similarity])
+}
+
+model LearningPath {
+  id          String   @id @default(uuid())
+
+  name        String
+  description String?  @db.Text
+
+  // Path configuration
+  difficulty  String   // "beginner", "intermediate", "advanced"
+  duration    Int      // Estimated days to complete
+  isPublic    Boolean  @default(true)
+
+  // Content
+  phraseIds   Json     // Ordered array of phrase IDs
+  milestones  Json?    // Array of milestone objects
+
+  // Stats
+  enrolledCount Int    @default(0)
+  completionRate Float @default(0.0)
+
+  createdBy   String?
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  enrollments UserPathProgress[]
+
+  @@index([difficulty])
+  @@index([isActive])
+  @@index([isPublic])
+}
+
+model UserPathProgress {
+  id          String   @id @default(uuid())
+
+  userId      String
+  pathId      String
+
+  // Progress
+  currentPosition Int   @default(0)
+  completedPhrases Json // Array of completed phrase IDs
+
+  status      String   @default("active") // "active", "completed", "abandoned"
+
+  // Stats
+  accuracy    Float    @default(0.0)
+  timeSpent   Int      @default(0) // Minutes
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  lastAccessedAt DateTime @default(now())
+
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  path        LearningPath @relation(fields: [pathId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, pathId])
+  @@index([userId])
+  @@index([pathId])
+  @@index([status])
+}
