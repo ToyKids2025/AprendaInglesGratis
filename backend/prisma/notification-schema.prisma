@@ -1,0 +1,258 @@
+/**
+ * PUSH NOTIFICATION SCHEMA
+ * Web and mobile push notifications with scheduling and analytics
+ */
+
+model PushNotification {
+  id          String   @id @default(uuid())
+
+  // Target
+  userId      String?  // Specific user (null = broadcast to segment)
+  segment     String?  // "all", "premium", "free", "inactive", "streak_lost"
+
+  // Content
+  title       String
+  body        String
+  imageUrl    String?
+  iconUrl     String?
+  badgeUrl    String?
+
+  // Action
+  actionUrl   String?  // Deep link URL
+  actionType  String?  // "open_app", "open_lesson", "open_achievement", "open_url"
+  actionData  Json?    // Additional data for action
+
+  // Scheduling
+  status      String   @default("draft") // "draft", "scheduled", "sending", "sent", "failed"
+  scheduledFor DateTime?
+  sentAt      DateTime?
+
+  // Analytics
+  delivered   Int      @default(0)
+  opened      Int      @default(0)
+  clicked     Int      @default(0)
+  failed      Int      @default(0)
+
+  // Metadata
+  campaign    String?  // Campaign identifier
+  priority    String   @default("normal") // "low", "normal", "high"
+  ttl         Int      @default(86400) // Time to live in seconds (default 24h)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  deliveries  NotificationDelivery[]
+
+  @@index([userId])
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model NotificationDelivery {
+  id          String   @id @default(uuid())
+
+  notificationId String
+  notification   PushNotification @relation(fields: [notificationId], references: [id], onDelete: Cascade)
+
+  userId      String
+
+  // Device info
+  deviceToken String
+  platform    String   // "web", "ios", "android"
+  deviceId    String?
+
+  // Status
+  status      String   @default("pending") // "pending", "sent", "delivered", "opened", "clicked", "failed"
+
+  // Tracking
+  sentAt      DateTime?
+  deliveredAt DateTime?
+  openedAt    DateTime?
+  clickedAt   DateTime?
+  failedAt    DateTime?
+  errorMessage String?
+
+  // Response
+  fcmMessageId String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([notificationId])
+  @@index([userId])
+  @@index([deviceToken])
+  @@index([status])
+}
+
+model DeviceToken {
+  id          String   @id @default(uuid())
+
+  userId      String
+
+  // Token
+  token       String   @unique
+  platform    String   // "web", "ios", "android"
+  deviceId    String?
+  deviceName  String?  // "Chrome on Windows", "iPhone 13"
+
+  // Browser info (for web)
+  browser     String?
+  browserVersion String?
+  os          String?
+  osVersion   String?
+
+  // App info (for mobile)
+  appVersion  String?
+
+  // Status
+  isActive    Boolean  @default(true)
+  lastUsedAt  DateTime @default(now())
+
+  // Validation
+  endpoint    String?  // Web Push endpoint
+  p256dh      String?  // Web Push public key
+  auth        String?  // Web Push auth secret
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([token])
+  @@index([isActive])
+}
+
+model NotificationPreference {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Global settings
+  enabled     Boolean  @default(true)
+  doNotDisturb Boolean @default(false)
+  quietHoursStart String? // "22:00"
+  quietHoursEnd   String? // "08:00"
+
+  // Category preferences
+  lessonReminders    Boolean @default(true)
+  streakReminders    Boolean @default(true)
+  achievementAlerts  Boolean @default(true)
+  socialNotifications Boolean @default(true)
+  marketingMessages  Boolean @default(false)
+  productUpdates     Boolean @default(true)
+
+  // Frequency limits
+  maxPerDay      Int     @default(10)
+  minInterval    Int     @default(3600) // Seconds between notifications
+
+  // Platform preferences
+  enableWeb      Boolean @default(true)
+  enableMobile   Boolean @default(true)
+  enableEmail    Boolean @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model NotificationTemplate {
+  id          String   @id @default(uuid())
+
+  // Template info
+  key         String   @unique // "daily_reminder", "streak_lost", "achievement_unlocked"
+  name        String
+  description String?
+
+  // Content (supports variables like {{name}}, {{streak}})
+  title       String
+  body        String
+  imageUrl    String?
+  iconUrl     String?
+
+  // Action
+  actionType  String?
+  actionUrl   String?
+
+  // Trigger
+  triggerType String   // "manual", "scheduled", "event"
+  triggerEvent String? // "lesson_completed", "streak_lost", "achievement_unlocked"
+
+  // Scheduling (for scheduled templates)
+  schedule    String?  // Cron expression: "0 9 * * *" (9 AM daily)
+  timezone    String?  // "America/Sao_Paulo"
+
+  // Targeting
+  defaultSegment String? // "all", "premium", "free", etc.
+
+  // Settings
+  isActive    Boolean  @default(true)
+  priority    String   @default("normal")
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([key])
+  @@index([triggerEvent])
+}
+
+model NotificationCampaign {
+  id          String   @id @default(uuid())
+
+  // Campaign info
+  name        String
+  description String?
+  status      String   @default("draft") // "draft", "scheduled", "active", "completed", "cancelled"
+
+  // Targeting
+  segment     String   // "all", "premium", "free", "custom"
+  customFilter Json?   // Custom targeting criteria
+
+  // Content
+  notificationId String? // Reference to notification if created
+
+  // Scheduling
+  scheduledFor DateTime?
+  startedAt   DateTime?
+  completedAt DateTime?
+
+  // Results
+  totalTargeted Int     @default(0)
+  totalSent     Int     @default(0)
+  totalDelivered Int    @default(0)
+  totalOpened   Int     @default(0)
+  totalClicked  Int     @default(0)
+
+  // Settings
+  priority    String   @default("normal")
+  throttle    Int?     // Max sends per minute (null = no throttle)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([scheduledFor])
+}
+
+model NotificationQueue {
+  id          String   @id @default(uuid())
+
+  userId      String
+  notificationId String
+
+  // Scheduling
+  scheduledFor DateTime
+  processedAt  DateTime?
+
+  // Status
+  status      String   @default("queued") // "queued", "processing", "sent", "failed"
+  attempts    Int      @default(0)
+  maxAttempts Int      @default(3)
+  errorMessage String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([scheduledFor])
+  @@index([status])
+}
