@@ -1,0 +1,332 @@
+/**
+ * VIDEO LESSONS SYSTEM SCHEMA
+ * Structured video courses with progress tracking
+ */
+
+model Course {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  slug        String   @unique
+  instructor  String
+  level       String   // "beginner", "intermediate", "advanced"
+  category    String   // "grammar", "conversation", "business", etc.
+  language    String   @default("en-US")
+
+  // Media
+  thumbnailUrl String?
+  trailerUrl   String?
+
+  // Metadata
+  duration     Int      // Total minutes
+  lessonsCount Int      @default(0)
+  studentsCount Int     @default(0)
+  rating       Float    @default(0)
+  reviewsCount Int      @default(0)
+
+  // Pricing
+  price        Float    @default(0)  // 0 = free
+  isPremium    Boolean  @default(false)
+  isPublished  Boolean  @default(false)
+
+  // Requirements
+  prerequisites String[] @default([])
+  learningObjectives String[] @default([])
+
+  // Timestamps
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+  publishedAt  DateTime?
+
+  // Relations
+  modules      CourseModule[]
+  enrollments  CourseEnrollment[]
+  reviews      CourseReview[]
+
+  @@index([slug])
+  @@index([category, level])
+  @@index([isPublished])
+}
+
+model CourseModule {
+  id          String   @id @default(uuid())
+  courseId    String
+  title       String
+  description String?
+  order       Int
+  duration    Int      // Minutes
+  isLocked    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  lessons     Lesson[]
+
+  @@index([courseId, order])
+}
+
+model Lesson {
+  id          String   @id @default(uuid())
+  moduleId    String
+  courseId    String   // Denormalized for faster queries
+  title       String
+  description String?  @db.Text
+  order       Int
+
+  // Video Data
+  videoUrl    String
+  videoProvider String @default("vimeo") // "vimeo", "youtube", "cloudflare"
+  videoDuration Int    // Seconds
+  thumbnailUrl String?
+
+  // Content
+  transcript  String?  @db.Text
+  subtitles   Json?    // { "en": "url", "pt": "url" }
+  attachments Json[]   @default([]) // [{ name, url, size, type }]
+
+  // Configuration
+  isFree      Boolean  @default(false)
+  isPreview   Boolean  @default(false)
+  allowDownload Boolean @default(false)
+
+  // Metadata
+  viewsCount  Int      @default(0)
+  completionsCount Int @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  module      CourseModule @relation(fields: [moduleId], references: [id], onDelete: Cascade)
+  progress    LessonProgress[]
+  notes       LessonNote[]
+  bookmarks   LessonBookmark[]
+  quizzes     LessonQuiz[]
+
+  @@index([moduleId, order])
+  @@index([courseId])
+}
+
+model CourseEnrollment {
+  id          String   @id @default(uuid())
+  userId      String
+  courseId    String
+
+  // Progress
+  status      String   @default("active") // "active", "completed", "paused", "cancelled"
+  progress    Float    @default(0) // 0-100
+  currentLessonId String?
+
+  // Completion
+  completedAt DateTime?
+  certificateUrl String?
+  finalScore  Float?
+
+  // Timestamps
+  enrolledAt  DateTime @default(now())
+  lastAccessedAt DateTime @default(now())
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([userId])
+  @@index([courseId])
+}
+
+model LessonProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  courseId    String   // Denormalized for analytics
+
+  // Progress Tracking
+  status      String   @default("not_started") // "not_started", "in_progress", "completed"
+  watchedDuration Int   @default(0) // Seconds watched
+  totalDuration   Int              // Total lesson duration
+  progress    Float    @default(0) // 0-100
+
+  // Completion
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+  quizScore   Float?   // 0-100
+
+  // Tracking
+  watchCount  Int      @default(0)
+  lastPosition Int     @default(0) // Resume from this position (seconds)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId])
+  @@index([userId, courseId])
+  @@index([lessonId])
+}
+
+model LessonNote {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+  courseId    String   // Denormalized
+
+  content     String   @db.Text
+  timestamp   Int?     // Video timestamp in seconds (null = general note)
+  isPrivate   Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@index([userId, courseId])
+  @@index([lessonId])
+}
+
+model LessonBookmark {
+  id          String   @id @default(uuid())
+  userId      String
+  lessonId    String
+
+  title       String
+  timestamp   Int      // Video timestamp in seconds
+  note        String?
+
+  createdAt   DateTime @default(now())
+
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, lessonId, timestamp])
+  @@index([userId])
+}
+
+model LessonQuiz {
+  id          String   @id @default(uuid())
+  lessonId    String
+
+  title       String
+  description String?
+  questions   Json[]   // [{ question, type, options, correctAnswer }]
+
+  // Configuration
+  passingScore Float   @default(70) // Percentage
+  maxAttempts Int?    // null = unlimited
+  timeLimit   Int?    // Minutes (null = no limit)
+  isRequired  Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  lesson      Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  attempts    QuizAttempt[]
+
+  @@index([lessonId])
+}
+
+model QuizAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  quizId      String
+  lessonId    String   // Denormalized
+
+  answers     Json[]   // [{ questionId, answer, isCorrect }]
+  score       Float    // 0-100
+  passed      Boolean
+
+  timeTaken   Int?     // Seconds
+  attemptNumber Int
+
+  createdAt   DateTime @default(now())
+
+  quiz        LessonQuiz @relation(fields: [quizId], references: [id], onDelete: Cascade)
+
+  @@index([userId, quizId])
+  @@index([lessonId])
+}
+
+model CourseReview {
+  id          String   @id @default(uuid())
+  userId      String
+  courseId    String
+
+  rating      Int      // 1-5
+  title       String?
+  comment     String?  @db.Text
+
+  // Moderation
+  isApproved  Boolean  @default(false)
+  isReported  Boolean  @default(false)
+
+  // Engagement
+  helpfulCount Int     @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  course      Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, courseId])
+  @@index([courseId, isApproved])
+}
+
+model Certificate {
+  id          String   @id @default(uuid())
+  userId      String
+  courseId    String
+
+  certificateNumber String @unique
+  title       String
+  studentName String
+  courseName  String
+  completionDate DateTime
+
+  // Certificate Data
+  instructorName String
+  duration    Int      // Total course hours
+  finalScore  Float?
+
+  // Files
+  pdfUrl      String?
+  imageUrl    String?
+
+  // Verification
+  verificationCode String @unique
+  isVerified  Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([certificateNumber])
+  @@index([verificationCode])
+}
+
+model VideoAnalytics {
+  id          String   @id @default(uuid())
+  lessonId    String
+  userId      String
+
+  // Session Data
+  sessionId   String
+  startedAt   DateTime
+  endedAt     DateTime?
+
+  // Playback Data
+  totalWatched Int     @default(0) // Seconds
+  playCount   Int      @default(0)
+  pauseCount  Int      @default(0)
+  seekCount   Int      @default(0)
+
+  // Quality
+  avgBitrate  Int?
+  bufferCount Int      @default(0)
+
+  // Device
+  device      String?  // "desktop", "mobile", "tablet"
+  browser     String?
+  os          String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([lessonId])
+  @@index([userId, createdAt])
+}
