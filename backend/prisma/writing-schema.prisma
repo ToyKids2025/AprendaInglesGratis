@@ -1,0 +1,374 @@
+/**
+ * WRITING EXERCISES SCHEMA
+ * AI-powered writing practice with intelligent correction
+ */
+
+model WritingExercise {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  type        String   // "essay", "email", "paragraph", "story", "report", "letter"
+
+  // Prompt
+  prompt      String   @db.Text
+  wordCountMin Int?
+  wordCountMax Int?
+  timeLimit   Int?     // Minutes
+
+  // Level & Category
+  level       String   // "beginner", "intermediate", "advanced"
+  category    String   // "business", "academic", "creative", "general"
+  topic       String?
+
+  // Grading Criteria
+  gradingCriteria Json // { grammar: 30, vocabulary: 25, coherence: 25, style: 20 }
+
+  // Reference Materials
+  sampleAnswer String?  @db.Text
+  tips        String[] @default([])
+  vocabulary  String[] @default([])
+  keywords    String[] @default([])
+
+  // Metadata
+  difficulty  Int      @default(3) // 1-5
+  estimatedTime Int?   // Minutes
+  tags        String[] @default([])
+
+  isPublished Boolean  @default(false)
+  createdBy   String?  // Instructor ID
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  submissions WritingSubmission[]
+
+  @@index([level, category])
+  @@index([type])
+  @@index([isPublished])
+}
+
+model WritingSubmission {
+  id          String   @id @default(uuid())
+  exerciseId  String
+  userId      String
+
+  // Content
+  content     String   @db.Text
+  wordCount   Int
+  characterCount Int
+
+  // Status
+  status      String   @default("submitted") // "submitted", "grading", "graded", "revised"
+
+  // AI Analysis
+  aiAnalysis  Json?    // Detailed analysis results
+  overallScore Float?  // 0-100
+
+  // Scores by criteria
+  grammarScore    Float?
+  vocabularyScore Float?
+  coherenceScore  Float?
+  styleScore      Float?
+
+  // Errors & Corrections
+  errors      Json[]   @default([]) // [{ type, severity, position, suggestion, explanation }]
+  errorCount  Int      @default(0)
+  corrections Json[]   @default([]) // Auto-corrections
+
+  // Feedback
+  aiFeedback  String?  @db.Text
+  strengths   String[] @default([])
+  improvements String[] @default([])
+
+  // Human Review (optional)
+  humanReview  String?  @db.Text
+  humanScore   Float?
+  reviewedBy   String?  // Instructor ID
+  reviewedAt   DateTime?
+
+  // Revision
+  isRevised    Boolean  @default(false)
+  revisionCount Int     @default(0)
+  previousVersions String[] @default([])
+
+  // Timing
+  timeSpent    Int?     // Seconds
+  submittedAt  DateTime @default(now())
+  gradedAt     DateTime?
+
+  exercise    WritingExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  revisions   WritingRevision[]
+
+  @@index([userId, exerciseId])
+  @@index([exerciseId])
+  @@index([userId, submittedAt])
+}
+
+model WritingRevision {
+  id          String   @id @default(uuid())
+  submissionId String
+
+  content     String   @db.Text
+  wordCount   Int
+
+  // Changes from previous version
+  changesDescription String? @db.Text
+  improvementAreas String[] @default([])
+
+  // New analysis
+  aiAnalysis  Json?
+  overallScore Float?
+  errors      Json[]   @default([])
+  errorCount  Int      @default(0)
+
+  revisionNumber Int
+  createdAt   DateTime @default(now())
+
+  submission  WritingSubmission @relation(fields: [submissionId], references: [id], onDelete: Cascade)
+
+  @@index([submissionId, revisionNumber])
+}
+
+model GrammarError {
+  id          String   @id @default(uuid())
+  userId      String
+
+  // Error details
+  type        String   // "grammar", "spelling", "punctuation", "word_choice", "style"
+  category    String   // "subject_verb_agreement", "tense", "article", etc.
+  severity    String   // "critical", "major", "minor"
+
+  // Context
+  originalText String
+  correctedText String
+  explanation String   @db.Text
+  rule        String?  @db.Text
+
+  // Position
+  sentence    String?  @db.Text
+  position    Int?
+
+  // Learning
+  isLearned   Boolean  @default(false)
+  occurrences Int      @default(1)
+  lastOccurrence DateTime @default(now())
+
+  // Source
+  exerciseId  String?
+  submissionId String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, type])
+  @@index([userId, isLearned])
+}
+
+model WritingTopic {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+
+  category    String
+  level       String
+  type        String   // "essay", "email", etc.
+
+  // Prompts
+  prompts     String[] // Multiple prompt variations
+
+  // Difficulty
+  difficulty  Int      @default(3)
+
+  // Usage
+  usageCount  Int      @default(0)
+  avgScore    Float?
+
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+
+  @@index([category, level])
+}
+
+model WritingTemplate {
+  id          String   @id @default(uuid())
+  name        String
+  type        String   // "email", "essay", "report", etc.
+
+  // Template content
+  structure   Json     // { introduction: "...", body: "...", conclusion: "..." }
+  example     String   @db.Text
+  guidelines  String[] @default([])
+
+  // Phrases & Expressions
+  usefulPhrases Json[] // [{ category: "introduction", phrases: [...] }]
+
+  level       String
+  category    String
+
+  isPublic    Boolean  @default(true)
+  usageCount  Int      @default(0)
+
+  createdAt   DateTime @default(now())
+
+  @@index([type, level])
+}
+
+model WritingChallenge {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+
+  // Challenge details
+  challengeType String // "daily", "weekly", "themed", "timed"
+  topic       String
+  prompt      String   @db.Text
+
+  // Requirements
+  wordCountMin Int?
+  wordCountMax Int?
+  timeLimit   Int?     // Minutes
+  level       String
+
+  // Timeline
+  startDate   DateTime
+  endDate     DateTime
+  timezone    String   @default("UTC")
+
+  // Rewards
+  xpReward    Int      @default(0)
+  badgeId     String?
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Stats
+  participantCount Int  @default(0)
+  submissionCount  Int  @default(0)
+  avgScore    Float?
+
+  createdAt   DateTime @default(now())
+
+  participants ChallengeParticipant[]
+
+  @@index([challengeType, isActive])
+  @@index([startDate, endDate])
+}
+
+model ChallengeParticipant {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+
+  submissionId String?
+  score       Float?
+  rank        Int?
+
+  completedAt DateTime?
+  isWinner    Boolean  @default(false)
+
+  joinedAt    DateTime @default(now())
+
+  challenge   WritingChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([challengeId, score])
+}
+
+model WritingProgress {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+
+  // Overall stats
+  totalSubmissions Int @default(0)
+  totalWords  Int      @default(0)
+  avgScore    Float?
+  bestScore   Float?
+
+  // By type
+  essayCount  Int      @default(0)
+  emailCount  Int      @default(0)
+  paragraphCount Int   @default(0)
+
+  // Skills tracking
+  grammarLevel Int     @default(1) // 1-10
+  vocabularyLevel Int  @default(1)
+  coherenceLevel Int   @default(1)
+  styleLevel  Int      @default(1)
+
+  // Common errors
+  commonErrors Json    @default({}) // { type: count }
+  improvedAreas String[] @default([])
+
+  // Streaks
+  currentStreak Int    @default(0)
+  longestStreak Int    @default(0)
+  lastSubmission DateTime?
+
+  // Goals
+  weeklyGoal  Int      @default(3) // Submissions per week
+  weeklyProgress Int   @default(0)
+
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model WritingPeerReview {
+  id          String   @id @default(uuid())
+  submissionId String
+  reviewerId  String
+
+  // Review content
+  rating      Int      // 1-5
+  comment     String   @db.Text
+
+  // Specific feedback
+  grammarFeedback String?
+  vocabularyFeedback String?
+  coherenceFeedback String?
+  styleFeedback String?
+
+  // Helpfulness
+  isHelpful   Boolean?
+  helpfulCount Int     @default(0)
+
+  // Status
+  isApproved  Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@unique([submissionId, reviewerId])
+  @@index([submissionId])
+  @@index([reviewerId])
+}
+
+model VocabularyUsage {
+  id          String   @id @default(uuid())
+  userId      String
+  word        String
+  submissionId String
+
+  // Context
+  sentence    String   @db.Text
+  usageCorrect Boolean
+
+  // Feedback
+  feedback    String?  @db.Text
+  betterAlternative String?
+
+  usedAt      DateTime @default(now())
+
+  @@index([userId, word])
+  @@index([submissionId])
+}
+
+model WritingResourcesAccessed {
+  id          String   @id @default(uuid())
+  userId      String
+  resourceType String  // "template", "example", "guide", "tip"
+  resourceId  String
+
+  accessedAt  DateTime @default(now())
+
+  @@index([userId, resourceType])
+}
