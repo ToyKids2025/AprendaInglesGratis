@@ -1,0 +1,391 @@
+/**
+ * LIVE CLASSES & WEBINARS SYSTEM SCHEMA
+ * Real-time interactive learning sessions
+ */
+
+model LiveClass {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+  type        String   // "class", "webinar", "workshop", "group_session"
+
+  // Instructor
+  instructorId String
+  coInstructorIds String[] @default([])
+
+  // Schedule
+  scheduledAt DateTime
+  duration    Int      // Minutes
+  timezone    String   @default("UTC")
+
+  // Status
+  status      String   @default("scheduled") // "scheduled", "live", "ended", "cancelled"
+  startedAt   DateTime?
+  endedAt     DateTime?
+
+  // Meeting Configuration
+  meetingUrl  String?
+  meetingId   String?  @unique
+  meetingPassword String?
+  platform    String   @default("internal") // "internal", "zoom", "google_meet"
+
+  // Capacity & Access
+  maxParticipants Int   @default(100)
+  isPublic    Boolean  @default(true)
+  requiresEnrollment Boolean @default(false)
+  price       Float    @default(0)  // 0 = free
+  isPremium   Boolean  @default(false)
+
+  // Content
+  level       String?  // "beginner", "intermediate", "advanced"
+  category    String?
+  tags        String[] @default([])
+  language    String   @default("en-US")
+
+  // Features
+  allowChat   Boolean  @default(true)
+  allowQuestions Boolean @default(true)
+  enableRecording Boolean @default(true)
+  enableWhiteboard Boolean @default(false)
+  enableBreakoutRooms Boolean @default(false)
+
+  // Recording
+  recordingUrl String?
+  recordingDuration Int? // Seconds
+
+  // Materials
+  slides      Json[]   @default([]) // [{ title, url }]
+  attachments Json[]   @default([]) // [{ name, url, size }]
+
+  // Analytics
+  totalAttendees Int   @default(0)
+  peakAttendance Int   @default(0)
+  avgAttendance  Int   @default(0)
+  totalMessages  Int   @default(0)
+  totalQuestions Int   @default(0)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  registrations LiveClassRegistration[]
+  attendances   LiveClassAttendance[]
+  messages      LiveClassMessage[]
+  questions     LiveClassQuestion[]
+  polls         LiveClassPoll[]
+  breakoutRooms BreakoutRoom[]
+  whiteboard    WhiteboardData[]
+
+  @@index([scheduledAt])
+  @@index([instructorId])
+  @@index([status])
+  @@index([type, category])
+}
+
+model LiveClassRegistration {
+  id          String   @id @default(uuid())
+  userId      String
+  classId     String
+
+  status      String   @default("registered") // "registered", "attended", "cancelled", "no_show"
+  attended    Boolean  @default(false)
+  attendedAt  DateTime?
+
+  // Payment (for paid classes)
+  paymentId   String?
+  paidAmount  Float?
+
+  // Notifications
+  reminderSent Boolean @default(false)
+
+  registeredAt DateTime @default(now())
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, classId])
+  @@index([userId])
+  @@index([classId])
+}
+
+model LiveClassAttendance {
+  id          String   @id @default(uuid())
+  userId      String
+  classId     String
+
+  // Session tracking
+  sessionId   String   @unique
+  joinedAt    DateTime
+  leftAt      DateTime?
+  duration    Int      @default(0) // Seconds
+
+  // Participation
+  messagesCount Int    @default(0)
+  reactionsCount Int   @default(0)
+  handRaisedCount Int  @default(0)
+
+  // Device info
+  device      String?  // "desktop", "mobile", "tablet"
+  browser     String?
+  os          String?
+
+  // Quality metrics
+  avgLatency  Int?     // Milliseconds
+  disconnections Int   @default(0)
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([userId, classId])
+  @@index([classId])
+}
+
+model LiveClassMessage {
+  id          String   @id @default(uuid())
+  classId     String
+  userId      String
+  userName    String
+
+  content     String   @db.Text
+  type        String   @default("text") // "text", "emoji", "file", "system"
+
+  // Moderation
+  isDeleted   Boolean  @default(false)
+  isPinned    Boolean  @default(false)
+  isHighlighted Boolean @default(false)
+
+  // Reactions
+  reactions   Json     @default({}) // { "👍": 5, "❤️": 3 }
+
+  // Reply
+  replyToId   String?
+
+  timestamp   DateTime @default(now())
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId, timestamp])
+  @@index([userId])
+}
+
+model LiveClassQuestion {
+  id          String   @id @default(uuid())
+  classId     String
+  userId      String
+  userName    String
+
+  question    String   @db.Text
+
+  // Status
+  status      String   @default("pending") // "pending", "answered", "dismissed"
+  answeredAt  DateTime?
+  answer      String?  @db.Text
+  answeredBy  String?  // Instructor ID
+
+  // Engagement
+  upvotes     Int      @default(0)
+  isHighlighted Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId, status])
+  @@index([userId])
+}
+
+model LiveClassPoll {
+  id          String   @id @default(uuid())
+  classId     String
+
+  question    String
+  options     Json[]   // [{ id, text, votes: 0 }]
+  type        String   @default("single") // "single", "multiple"
+
+  // Status
+  isActive    Boolean  @default(true)
+  isAnonymous Boolean  @default(false)
+
+  // Results
+  totalVotes  Int      @default(0)
+  results     Json     @default({}) // { optionId: count }
+
+  createdAt   DateTime @default(now())
+  closedAt    DateTime?
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+  votes       PollVote[]
+
+  @@index([classId])
+}
+
+model PollVote {
+  id          String   @id @default(uuid())
+  pollId      String
+  userId      String
+
+  selectedOptions String[] // Option IDs
+
+  votedAt     DateTime @default(now())
+
+  poll        LiveClassPoll @relation(fields: [pollId], references: [id], onDelete: Cascade)
+
+  @@unique([pollId, userId])
+  @@index([pollId])
+}
+
+model BreakoutRoom {
+  id          String   @id @default(uuid())
+  classId     String
+
+  name        String
+  roomNumber  Int
+  topic       String?
+
+  // Participants
+  participantIds String[] @default([])
+  maxParticipants Int   @default(10)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Duration
+  duration    Int?     // Minutes
+  startedAt   DateTime?
+  endedAt     DateTime?
+
+  createdAt   DateTime @default(now())
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@index([classId])
+}
+
+model WhiteboardData {
+  id          String   @id @default(uuid())
+  classId     String
+
+  // Canvas data
+  pageNumber  Int      @default(1)
+  elements    Json[]   // [{ type, x, y, width, height, color, etc. }]
+
+  // Snapshots for history
+  snapshot    Json?
+
+  updatedBy   String   // User ID
+  updatedAt   DateTime @default(now())
+
+  class       LiveClass @relation(fields: [classId], references: [id], onDelete: Cascade)
+
+  @@unique([classId, pageNumber])
+  @@index([classId])
+}
+
+model LiveClassSeries {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+
+  instructorId String
+
+  // Schedule pattern
+  recurrenceRule String? // iCal RRULE format
+  timezone    String   @default("UTC")
+
+  // Classes in series
+  classIds    String[] @default([])
+  totalClasses Int     @default(0)
+
+  // Pricing
+  price       Float    @default(0)
+  isPremium   Boolean  @default(false)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([instructorId])
+}
+
+model WaitingRoom {
+  id          String   @id @default(uuid())
+  classId     String
+
+  userId      String
+  userName    String
+  userEmail   String?
+
+  // Status
+  status      String   @default("waiting") // "waiting", "admitted", "denied"
+  admittedAt  DateTime?
+  admittedBy  String?  // Instructor ID
+
+  joinedAt    DateTime @default(now())
+
+  @@unique([classId, userId])
+  @@index([classId, status])
+}
+
+model ClassRecording {
+  id          String   @id @default(uuid())
+  classId     String
+
+  title       String
+  recordingUrl String
+  duration    Int      // Seconds
+  fileSize    Int?     // Bytes
+
+  // Processing
+  status      String   @default("processing") // "processing", "ready", "failed"
+  processedAt DateTime?
+
+  // Access
+  isPublic    Boolean  @default(false)
+  viewsCount  Int      @default(0)
+
+  // Timestamps
+  recordedAt  DateTime @default(now())
+  createdAt   DateTime @default(now())
+
+  @@index([classId])
+  @@index([status])
+}
+
+model LiveClassReview {
+  id          String   @id @default(uuid())
+  classId     String
+  userId      String
+
+  rating      Int      // 1-5 stars
+  comment     String?  @db.Text
+
+  // Specific ratings
+  contentQuality Int?  // 1-5
+  instructorRating Int? // 1-5
+  technicalQuality Int? // 1-5
+
+  createdAt   DateTime @default(now())
+
+  @@unique([classId, userId])
+  @@index([classId])
+}
+
+model InstructorAvailability {
+  id          String   @id @default(uuid())
+  instructorId String
+
+  // Schedule
+  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
+  startTime   String   // "09:00"
+  endTime     String   // "17:00"
+  timezone    String   @default("UTC")
+
+  // Exceptions
+  isAvailable Boolean  @default(true)
+  date        DateTime? // Specific date override
+
+  createdAt   DateTime @default(now())
+
+  @@index([instructorId, dayOfWeek])
+  @@index([instructorId, date])
+}
