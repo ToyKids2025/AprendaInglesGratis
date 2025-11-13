@@ -1,0 +1,63 @@
+model SpeakingExercise {
+  id          String   @id @default(uuid())
+  title       String
+  prompt      String   @db.Text
+  type        String   // "description", "opinion", "roleplay", "retell"
+  level       String
+  timeLimit   Int      // Seconds
+  sampleAnswer String? @db.Text
+  
+  isPublished Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  
+  recordings  SpeakingRecording[]
+}
+
+model SpeakingRecording {
+  id          String   @id @default(uuid())
+  userId      String
+  exerciseId  String
+  
+  audioUrl    String
+  duration    Int      // Seconds
+  transcript  String?  @db.Text
+  
+  // AI Analysis
+  fluencyScore      Float?
+  pronunciationScore Float?
+  grammarScore      Float?
+  vocabularyScore   Float?
+  overallScore      Float?
+  
+  feedback    String?  @db.Text
+  
+  createdAt   DateTime @default(now())
+  exercise    SpeakingExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, exerciseId])
+}
+
+model PronunciationExercise {
+  id          String   @id @default(uuid())
+  word        String
+  phonetic    String
+  audioUrl    String
+  difficulty  Int      @default(3)
+  
+  attempts    PronunciationAttempt[]
+}
+
+model PronunciationAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  exerciseId  String
+  
+  userAudioUrl String
+  accuracyScore Float?
+  feedback    String?
+  
+  createdAt   DateTime @default(now())
+  exercise    PronunciationExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  
+  @@index([userId, exerciseId])
+}
