@@ -1,0 +1,9 @@
+model CulturalLesson {
+  id String @id @default(uuid())
+  country String
+  topic String
+  content String @db.Text
+  facts String[] @default([])
+  videoUrl String?
+  createdAt DateTime @default(now())
+}

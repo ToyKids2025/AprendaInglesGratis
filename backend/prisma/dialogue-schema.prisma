@@ -1,0 +1,9 @@
+model Dialogue {
+  id String @id @default(uuid())
+  title String
+  scenario String
+  lines Json[] @default([])
+  vocabulary String[] @default([])
+  audioUrl String?
+  createdAt DateTime @default(now())
+}

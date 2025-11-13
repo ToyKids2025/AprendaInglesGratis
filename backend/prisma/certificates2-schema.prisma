@@ -1,0 +1,8 @@
+model CourseCertificate {
+  id String @id @default(uuid())
+  userId String
+  courseTitle String
+  issuedAt DateTime @default(now())
+  certificateNumber String @unique
+  pdfUrl String?
+}

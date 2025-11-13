@@ -1,0 +1,16 @@
+model FlashcardDeck {
+  id String @id @default(uuid())
+  name String
+  description String?
+  userId String
+  cards FlashCard[]
+  createdAt DateTime @default(now())
+}
+
+model FlashCard {
+  id String @id @default(uuid())
+  deckId String
+  front String
+  back String
+  deck FlashcardDeck @relation(fields: [deckId], references: [id], onDelete: Cascade)
+}

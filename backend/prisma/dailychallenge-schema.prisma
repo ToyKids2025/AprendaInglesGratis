@@ -1,0 +1,17 @@
+model DailyChallenge {
+  id String @id @default(uuid())
+  date DateTime @unique
+  challengeType String
+  taskDescription String
+  xpReward Int @default(50)
+  completions ChallengeCompletion[]
+}
+
+model ChallengeCompletion {
+  id String @id @default(uuid())
+  userId String
+  challengeId String
+  completedAt DateTime @default(now())
+  challenge DailyChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+  @@unique([userId, challengeId])
+}

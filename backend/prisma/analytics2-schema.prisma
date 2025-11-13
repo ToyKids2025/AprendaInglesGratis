@@ -1,0 +1,10 @@
+model UserAnalytics {
+  id String @id @default(uuid())
+  userId String @unique
+  totalStudyTime Int @default(0)
+  lessonsCompleted Int @default(0)
+  exercisesCompleted Int @default(0)
+  averageScore Float?
+  lastActive DateTime?
+  updatedAt DateTime @updatedAt
+}

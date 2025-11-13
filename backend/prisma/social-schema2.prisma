@@ -1,0 +1,20 @@
+model UserProfile {
+  id String @id @default(uuid())
+  userId String @unique
+  bio String?
+  avatar String?
+  nativeLanguage String?
+  targetLanguage String @default("English")
+  followers UserFollow[] @relation("following")
+  following UserFollow[] @relation("follower")
+}
+
+model UserFollow {
+  id String @id @default(uuid())
+  followerId String
+  followingId String
+  createdAt DateTime @default(now())
+  follower UserProfile @relation("follower", fields: [followerId], references: [userId])
+  following UserProfile @relation("following", fields: [followingId], references: [userId])
+  @@unique([followerId, followingId])
+}
