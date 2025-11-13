@@ -1,0 +1,410 @@
+/**
+ * READING COMPREHENSION SYSTEM SCHEMA
+ * Interactive reading exercises with comprehension analysis
+ */
+
+model ReadingPassage {
+  id          String   @id @default(uuid())
+  title       String
+  author      String?
+  source      String?
+
+  // Content
+  content     String   @db.Text
+  excerpt     String?  @db.Text // Short preview
+
+  // Metadata
+  type        String   // "article", "story", "essay", "news", "academic", "dialogue"
+  genre       String?  // "fiction", "non-fiction", "biography", "science", etc.
+  topic       String?
+
+  // Level & Difficulty
+  level       String   // "beginner", "intermediate", "advanced"
+  cefrLevel   String?  // "A1", "A2", "B1", "B2", "C1", "C2"
+  difficulty  Int      @default(3) // 1-5
+
+  // Reading Stats
+  wordCount   Int
+  readingTime Int      // Estimated minutes
+
+  // Vocabulary
+  vocabularyLevel String? // "basic", "intermediate", "advanced"
+  keyVocabulary String[] @default([]) // Important words
+  idioms      String[] @default([])
+
+  // Educational
+  learningObjectives String[] @default([])
+  themes      String[] @default([])
+  tags        String[] @default([])
+
+  // Media
+  imageUrl    String?
+  audioUrl    String?  // Text-to-speech or narration
+
+  // Status
+  isPublished Boolean  @default(false)
+  isPremium   Boolean  @default(false)
+
+  // Analytics
+  viewCount   Int      @default(0)
+  completionCount Int  @default(0)
+  avgScore    Float?
+  avgReadingTime Float?
+
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  questions   ReadingQuestion[]
+  attempts    ReadingAttempt[]
+  highlights  ReadingHighlight[]
+  notes       ReadingNote[]
+
+  @@index([level, type])
+  @@index([isPublished])
+  @@index([topic])
+}
+
+model ReadingQuestion {
+  id          String   @id @default(uuid())
+  passageId   String
+
+  // Question
+  question    String   @db.Text
+  questionType String  // "multiple_choice", "true_false", "short_answer", "inference", "vocabulary"
+
+  // Multiple Choice
+  options     String[] @default([])
+  correctAnswer String
+
+  // Additional answers for flexibility
+  acceptableAnswers String[] @default([])
+
+  // Context
+  relevantParagraph Int? // Paragraph number where answer is found
+  relevantText String?  // Specific text excerpt
+
+  // Explanation
+  explanation String?  @db.Text
+  hint        String?
+
+  // Difficulty
+  difficulty  Int      @default(3) // 1-5
+  skillTested String?  // "main_idea", "details", "inference", "vocabulary", "tone", "purpose"
+
+  // Ordering
+  order       Int      @default(0)
+
+  // Points
+  points      Int      @default(1)
+
+  createdAt   DateTime @default(now())
+
+  passage     ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@index([passageId, order])
+}
+
+model ReadingAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  passageId   String
+
+  // Status
+  status      String   @default("in_progress") // "in_progress", "completed", "abandoned"
+
+  // Reading behavior
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  timeSpent   Int?     // Seconds
+
+  // Scroll/Read tracking
+  scrollProgress Float  @default(0) // 0-100
+  readingSessions Int   @default(1)
+
+  // Answers
+  answers     Json[]   @default([]) // [{ questionId, answer, isCorrect, timeSpent }]
+
+  // Scoring
+  totalQuestions Int   @default(0)
+  correctAnswers Int   @default(0)
+  score       Float?   // 0-100
+
+  // Skills assessment
+  skillScores Json     @default({}) // { "main_idea": 80, "details": 90, ... }
+
+  // Feedback
+  feedback    String?  @db.Text
+  strengths   String[] @default([])
+  weaknesses  String[] @default([])
+
+  // Reading speed
+  wordsPerMinute Float?
+  comprehensionRate Float? // Score relative to reading speed
+
+  passage     ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@index([userId, passageId])
+  @@index([userId, completedAt])
+}
+
+model ReadingHighlight {
+  id          String   @id @default(uuid())
+  userId      String
+  passageId   String
+
+  // Highlighted text
+  text        String   @db.Text
+  startOffset Int
+  endOffset   Int
+
+  // Color/Category
+  color       String   @default("yellow") // "yellow", "green", "blue", "pink"
+  category    String?  // "important", "vocabulary", "question", "confusing"
+
+  // Note attached to highlight
+  note        String?  @db.Text
+
+  createdAt   DateTime @default(now())
+
+  passage     ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@index([userId, passageId])
+}
+
+model ReadingNote {
+  id          String   @id @default(uuid())
+  userId      String
+  passageId   String
+
+  // Note content
+  content     String   @db.Text
+
+  // Position (paragraph or general)
+  paragraph   Int?
+
+  // Type
+  type        String   @default("general") // "general", "question", "summary", "reflection"
+
+  isPrivate   Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  passage     ReadingPassage @relation(fields: [passageId], references: [id], onDelete: Cascade)
+
+  @@index([userId, passageId])
+}
+
+model ReadingProgress {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+
+  // Overall stats
+  totalPassagesRead Int    @default(0)
+  totalTimeSpent  Int      @default(0) // Seconds
+  totalWordsRead  Int      @default(0)
+
+  // Scores
+  avgScore    Float?
+  bestScore   Float?
+
+  // By level
+  beginnerCount    Int     @default(0)
+  intermediateCount Int    @default(0)
+  advancedCount    Int     @default(0)
+
+  // By type
+  articleCount     Int     @default(0)
+  storyCount       Int     @default(0)
+  academicCount    Int     @default(0)
+
+  // Skills proficiency (0-100)
+  mainIdeaSkill    Float   @default(50)
+  detailsSkill     Float   @default(50)
+  inferenceSkill   Float   @default(50)
+  vocabularySkill  Float   @default(50)
+  toneSkill        Float   @default(50)
+
+  // Reading speed
+  avgWordsPerMinute Float?
+  improvementRate   Float?
+
+  // Streaks
+  currentStreak    Int     @default(0)
+  longestStreak    Int     @default(0)
+  lastReadDate     DateTime?
+
+  // Goals
+  weeklyGoal       Int     @default(5) // Passages per week
+  weeklyProgress   Int     @default(0)
+
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model ReadingCollection {
+  id          String   @id @default(uuid())
+  name        String
+  description String?  @db.Text
+
+  // Collection type
+  type        String   // "curated", "course", "level_based", "topic_based"
+
+  // Passages in collection
+  passageIds  String[] @default([])
+  totalPassages Int    @default(0)
+
+  // Ordering
+  isOrdered   Boolean  @default(false) // Sequential vs any order
+
+  // Access
+  isPublic    Boolean  @default(true)
+  isPremium   Boolean  @default(false)
+
+  // Metadata
+  level       String?
+  category    String?
+  imageUrl    String?
+
+  // Stats
+  subscriberCount Int  @default(0)
+  completionCount Int  @default(0)
+
+  createdBy   String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  subscriptions CollectionSubscription[]
+
+  @@index([type, isPublic])
+}
+
+model CollectionSubscription {
+  id          String   @id @default(uuid())
+  userId      String
+  collectionId String
+
+  // Progress
+  completedPassages String[] @default([])
+  currentPassageIndex Int   @default(0)
+  progress    Float    @default(0) // 0-100
+
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  subscribedAt DateTime @default(now())
+
+  collection  ReadingCollection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, collectionId])
+  @@index([userId])
+}
+
+model VocabularyFromReading {
+  id          String   @id @default(uuid())
+  userId      String
+  passageId   String
+
+  word        String
+  definition  String?  @db.Text
+  context     String?  @db.Text // Sentence where it appeared
+
+  // Learning
+  isLearned   Boolean  @default(false)
+  reviewCount Int      @default(0)
+  lastReviewed DateTime?
+
+  // Notes
+  userNote    String?  @db.Text
+
+  savedAt     DateTime @default(now())
+
+  @@index([userId, word])
+  @@index([passageId])
+}
+
+model ReadingChallenge {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+
+  // Challenge type
+  type        String   // "speed_reading", "comprehension", "weekly", "marathon"
+
+  // Requirements
+  passageCount Int?
+  timeLimit   Int?     // Seconds per passage
+  minScore    Float?   // Minimum score required
+  level       String?
+
+  // Timeline
+  startDate   DateTime
+  endDate     DateTime
+
+  // Rewards
+  xpReward    Int      @default(0)
+  badgeId     String?
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Stats
+  participantCount Int  @default(0)
+  completionCount  Int  @default(0)
+
+  createdAt   DateTime @default(now())
+
+  participants ChallengeProgress[]
+
+  @@index([type, isActive])
+}
+
+model ChallengeProgress {
+  id          String   @id @default(uuid())
+  userId      String
+  challengeId String
+
+  // Progress
+  passagesCompleted Int  @default(0)
+  currentScore Float?
+
+  isCompleted Boolean  @default(false)
+  completedAt DateTime?
+
+  joinedAt    DateTime @default(now())
+
+  challenge   ReadingChallenge @relation(fields: [challengeId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, challengeId])
+  @@index([challengeId])
+}
+
+model ReadingInsight {
+  id          String   @id @default(uuid())
+  userId      String
+
+  // Insight type
+  type        String   // "strength", "weakness", "milestone", "recommendation"
+
+  // Content
+  title       String
+  description String   @db.Text
+
+  // Data
+  metric      String?  // e.g., "reading_speed", "comprehension_score"
+  value       Float?
+  change      Float?   // Percentage change
+
+  // Actionable
+  suggestions String[] @default([])
+
+  // Status
+  isRead      Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([type])
+}
