@@ -1,0 +1,164 @@
+/**
+ * VOCABULARY BUILDER SCHEMA
+ * Personal vocabulary lists, flashcards, and spaced repetition
+ */
+
+model VocabularyList {
+  id          String   @id @default(uuid())
+
+  userId      String
+
+  // List details
+  name        String
+  description String?
+  category    String?  // "Business", "Travel", "Academic", etc.
+  isPublic    Boolean  @default(false)
+
+  // Stats
+  totalWords  Int      @default(0)
+  masteredWords Int    @default(0)
+
+  // Settings
+  dailyGoal   Int      @default(10) // Words to review per day
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  words       VocabularyWord[]
+
+  @@index([userId])
+  @@index([category])
+}
+
+model VocabularyWord {
+  id          String   @id @default(uuid())
+
+  listId      String
+  list        VocabularyList @relation(fields: [listId], references: [id], onDelete: Cascade)
+
+  userId      String
+
+  // Word details
+  word        String
+  translation String
+  definition  String?
+  pronunciation String?  // Phonetic transcription
+  audioUrl    String?
+
+  // Context
+  exampleSentence String?
+  exampleTranslation String?
+
+  // Classification
+  partOfSpeech String?  // "noun", "verb", "adjective", etc.
+  difficulty   String   @default("medium") // "easy", "medium", "hard"
+  tags         Json?    // Array of tags
+
+  // Spaced Repetition (SM-2 Algorithm)
+  easeFactor   Float    @default(2.5)
+  interval     Int      @default(1) // Days until next review
+  repetitions  Int      @default(0)
+  nextReviewAt DateTime @default(now())
+  lastReviewAt DateTime?
+
+  // Performance
+  correctCount Int      @default(0)
+  wrongCount   Int      @default(0)
+  masteryLevel Int      @default(0) // 0-5, 5 = mastered
+
+  // Status
+  isActive     Boolean  @default(true)
+  isFavorite   Boolean  @default(false)
+
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  // Relations
+  reviews      VocabularyReview[]
+
+  @@index([listId])
+  @@index([userId])
+  @@index([nextReviewAt])
+  @@index([masteryLevel])
+}
+
+model VocabularyReview {
+  id          String   @id @default(uuid())
+
+  wordId      String
+  word        VocabularyWord @relation(fields: [wordId], references: [id], onDelete: Cascade)
+
+  userId      String
+
+  // Review details
+  quality     Int      // 0-5 (SM-2 algorithm quality rating)
+  timeTaken   Int?     // Seconds to answer
+
+  // Result
+  wasCorrect  Boolean
+  answer      String?  // User's answer
+
+  // Context
+  reviewType  String   @default("flashcard") // "flashcard", "quiz", "typing"
+
+  createdAt   DateTime @default(now())
+
+  @@index([wordId])
+  @@index([userId])
+  @@index([createdAt])
+}
+
+model VocabularyStats {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Overall stats
+  totalWords      Int @default(0)
+  masteredWords   Int @default(0)
+  learningWords   Int @default(0)
+
+  // Daily stats
+  wordsReviewedToday Int @default(0)
+  wordsAddedToday    Int @default(0)
+  currentStreak      Int @default(0)
+  longestStreak      Int @default(0)
+
+  // Performance
+  avgAccuracy        Float @default(0)
+  totalReviews       Int   @default(0)
+
+  // Last activity
+  lastReviewAt       DateTime?
+  lastStreakDate     DateTime?
+
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+}
+
+model SharedVocabularyList {
+  id          String   @id @default(uuid())
+
+  listId      String
+  ownerId     String
+
+  // Sharing details
+  shareCode   String   @unique
+  title       String
+  description String?
+
+  // Stats
+  viewCount   Int      @default(0)
+  copyCount   Int      @default(0)
+
+  // Settings
+  isActive    Boolean  @default(true)
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([shareCode])
+  @@index([ownerId])
+}
