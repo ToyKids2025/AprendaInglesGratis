@@ -1,0 +1,21 @@
+model TestPrepExam {
+  id String @id @default(uuid())
+  examType String // "TOEFL", "IELTS", "TOEIC"
+  section String // "reading", "listening", "writing", "speaking"
+  title String
+  questions Json[] @default([])
+  timeLimit Int // Minutes
+  createdAt DateTime @default(now())
+  attempts TestAttempt[]
+}
+
+model TestAttempt {
+  id String @id @default(uuid())
+  userId String
+  examId String
+  answers Json[] @default([])
+  score Float?
+  completedAt DateTime?
+  exam TestPrepExam @relation(fields: [examId], references: [id], onDelete: Cascade)
+  @@index([userId, examId])
+}

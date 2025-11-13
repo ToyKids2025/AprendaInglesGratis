@@ -1,0 +1,18 @@
+model BusinessLesson {
+  id String @id @default(uuid())
+  title String
+  topic String // "meetings", "negotiations", "presentations"
+  content String @db.Text
+  vocabulary String[] @default([])
+  phrases String[] @default([])
+  level String @default("intermediate")
+  createdAt DateTime @default(now())
+}
+
+model BusinessScenario {
+  id String @id @default(uuid())
+  scenario String
+  roleplayScript String @db.Text
+  tips String[] @default([])
+  createdAt DateTime @default(now())
+}

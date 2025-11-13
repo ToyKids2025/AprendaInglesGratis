@@ -1,0 +1,21 @@
+model Idiom {
+  id String @id @default(uuid())
+  idiom String @unique
+  meaning String @db.Text
+  example String @db.Text
+  category String
+  difficulty Int @default(3)
+  createdAt DateTime @default(now())
+  userIdioms UserIdiom[]
+}
+
+model UserIdiom {
+  id String @id @default(uuid())
+  userId String
+  idiomId String
+  isLearned Boolean @default(false)
+  notes String?
+  savedAt DateTime @default(now())
+  idiom Idiom @relation(fields: [idiomId], references: [id], onDelete: Cascade)
+  @@unique([userId, idiomId])
+}

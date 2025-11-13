@@ -1,0 +1,20 @@
+model GrammarExercise {
+  id String @id @default(uuid())
+  title String
+  grammarPoint String // "present_perfect", "conditionals", etc.
+  level String
+  questions Json[] @default([])
+  createdAt DateTime @default(now())
+  attempts GrammarAttempt[]
+}
+
+model GrammarAttempt {
+  id String @id @default(uuid())
+  userId String
+  exerciseId String
+  answers Json[] @default([])
+  score Float?
+  completedAt DateTime?
+  exercise GrammarExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+  @@index([userId, exerciseId])
+}
