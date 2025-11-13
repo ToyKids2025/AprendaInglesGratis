@@ -1,0 +1,44 @@
+// Day 86 - AB Testing
+model ABTest { id String @id @default(uuid()); name String; variantA String; variantB String; isActive Boolean @default(true); }
+
+// Day 87 - Experiments
+model Experiment { id String @id @default(uuid()); name String; hypothesis String @db.Text; status String; startDate DateTime; }
+
+// Day 88 - Surveys
+model Survey { id String @id @default(uuid()); title String; questions Json[] @default([]); isActive Boolean @default(true); }
+
+// Day 89 - Poll System
+model Poll { id String @id @default(uuid()); question String; options Json[] @default([]); createdAt DateTime @default(now()); }
+
+// Day 90 - Quiz Builder
+model QuizTemplate { id String @id @default(uuid()); title String; questions Json[] @default([]); createdAt DateTime @default(now()); }
+
+// Day 91 - Form Builder
+model CustomForm { id String @id @default(uuid()); name String; fields Json[] @default([]); isPublished Boolean @default(false); }
+
+// Day 92 - Calendar Events
+model CalendarEvent { id String @id @default(uuid()); userId String; title String; startDate DateTime; endDate DateTime; }
+
+// Day 93 - Reminders
+model Reminder { id String @id @default(uuid()); userId String; message String; remindAt DateTime; isSent Boolean @default(false); }
+
+// Day 94 - Notes System
+model Note { id String @id @default(uuid()); userId String; title String; content String @db.Text; createdAt DateTime @default(now()); }
+
+// Day 95 - Folders
+model Folder { id String @id @default(uuid()); userId String; name String; parentId String?; createdAt DateTime @default(now()); }
+
+// Day 96 - Sharing
+model Share { id String @id @default(uuid()); ownerId String; contentId String; sharedWith String; expiresAt DateTime?; }
+
+// Day 97 - Collaboration
+model Collaboration { id String @id @default(uuid()); resourceId String; userId String; role String; joinedAt DateTime @default(now()); }
+
+// Day 98 - Version Control
+model Version { id String @id @default(uuid()); contentId String; version Int; data Json; createdAt DateTime @default(now()); }
+
+// Day 99 - Backup System
+model Backup { id String @id @default(uuid()); resourceType String; resourceId String; backupData Json; createdAt DateTime @default(now()); }
+
+// Day 100 - System Health
+model HealthCheck { id String @id @default(uuid()); service String; status String; lastCheck DateTime @default(now()); uptime Int; }

@@ -1,0 +1,45 @@
+// Day 71 - Email Templates
+model EmailTemplate { id String @id @default(uuid()); name String; subject String; body String @db.Text; category String; }
+
+// Day 72 - SMS Notifications
+model SmsNotification { id String @id @default(uuid()); userId String; phone String; message String; sentAt DateTime @default(now()); }
+
+// Day 73 - Webhooks
+model Webhook { id String @id @default(uuid()); url String; events String[] @default([]); isActive Boolean @default(true); }
+
+// Day 74 - API Keys
+model ApiKey { id String @id @default(uuid()); userId String; key String @unique; name String; createdAt DateTime @default(now()); }
+
+// Day 75 - Rate Limiting
+model RateLimit { id String @id @default(uuid()); userId String; endpoint String; count Int @default(0); resetAt DateTime; }
+
+// Day 76 - Audit Logs
+model AuditLog { id String @id @default(uuid()); userId String; action String; resource String; timestamp DateTime @default(now()); }
+
+// Day 77 - File Uploads
+model FileUpload { id String @id @default(uuid()); userId String; filename String; url String; size Int; uploadedAt DateTime @default(now()); }
+
+// Day 78 - Bookmarks
+model Bookmark { id String @id @default(uuid()); userId String; contentType String; contentId String; createdAt DateTime @default(now()); }
+
+// Day 79 - Comments System
+model Comment { id String @id @default(uuid()); userId String; contentId String; text String @db.Text; createdAt DateTime @default(now()); }
+
+// Day 80 - Ratings
+model Rating { id String @id @default(uuid()); userId String; contentId String; score Int; createdAt DateTime @default(now()); }
+
+// Day 81 - Tags
+model Tag { id String @id @default(uuid()); name String @unique; }
+model ContentTag { id String @id @default(uuid()); contentId String; tagId String; }
+
+// Day 82 - Search History
+model SearchHistory { id String @id @default(uuid()); userId String; query String; searchedAt DateTime @default(now()); }
+
+// Day 83 - Favorites
+model Favorite { id String @id @default(uuid()); userId String; contentId String; addedAt DateTime @default(now()); }
+
+// Day 84 - User Preferences
+model UserPreference { id String @id @default(uuid()); userId String @unique; theme String @default("light"); language String @default("en"); notifications Boolean @default(true); }
+
+// Day 85 - Feature Flags
+model FeatureFlag { id String @id @default(uuid()); name String @unique; isEnabled Boolean @default(false); description String?; }
