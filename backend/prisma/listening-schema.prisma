@@ -1,0 +1,65 @@
+/**
+ * LISTENING EXERCISES SCHEMA
+ * Audio-based comprehension with transcripts
+ */
+
+model ListeningExercise {
+  id          String   @id @default(uuid())
+  title       String
+  description String   @db.Text
+
+  // Audio
+  audioUrl    String
+  audioDuration Int    // Seconds
+  transcript  String   @db.Text
+
+  // Metadata
+  type        String   // "conversation", "lecture", "interview", "news", "podcast"
+  accent      String   // "american", "british", "australian", "neutral"
+  speed       String   // "slow", "normal", "fast"
+  level       String
+  topic       String?
+
+  // Questions
+  questions   Json[]   @default([])
+
+  // Features
+  hasSubtitles Boolean @default(true)
+  allowRepeat  Boolean @default(true)
+  showTranscript Boolean @default(false)
+
+  isPublished Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  attempts    ListeningAttempt[]
+}
+
+model ListeningAttempt {
+  id          String   @id @default(uuid())
+  userId      String
+  exerciseId  String
+
+  answers     Json[]   @default([])
+  score       Float?
+  listenCount Int      @default(0)
+
+  completedAt DateTime?
+
+  exercise    ListeningExercise @relation(fields: [exerciseId], references: [id], onDelete: Cascade)
+
+  @@index([userId, exerciseId])
+}
+
+model ListeningProgress {
+  id          String   @id @default(uuid())
+  userId      String   @unique
+
+  totalExercises Int   @default(0)
+  avgScore    Float?
+
+  // By accent
+  americanScore Float?
+  britishScore  Float?
+
+  updatedAt   DateTime @updatedAt
+}
