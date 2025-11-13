@@ -1,0 +1,234 @@
+/**
+ * REFERRAL & AFFILIATE SYSTEM SCHEMA
+ * User referrals, affiliate program, and commission tracking
+ */
+
+model ReferralCode {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Code details
+  code        String   @unique // e.g., "ALEX2024"
+  customSlug  String?  @unique // Custom URL slug
+
+  // Statistics
+  clicks      Int      @default(0)
+  signups     Int      @default(0)
+  conversions Int      @default(0) // Paid subscriptions
+
+  // Earnings
+  totalEarned Decimal  @default(0) @db.Decimal(10, 2)
+  pendingEarnings Decimal @default(0) @db.Decimal(10, 2)
+  paidEarnings    Decimal @default(0) @db.Decimal(10, 2)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  // Dates
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  lastUsedAt  DateTime?
+
+  // Relations
+  referrals   Referral[]
+  commissions Commission[]
+
+  @@index([code])
+  @@index([userId])
+}
+
+model Referral {
+  id          String   @id @default(uuid())
+
+  // Who referred whom
+  referrerId  String   // User who owns the referral code
+  referredId  String   @unique // User who was referred
+
+  // Referral details
+  referralCodeId String
+  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id])
+
+  // Tracking
+  clickedAt   DateTime?
+  signupAt    DateTime
+  convertedAt DateTime? // When they became paid user
+
+  // Source tracking
+  source      String?  // "link", "code_input", "social"
+  campaign    String?  // UTM campaign if any
+  ipAddress   String?
+  userAgent   String?
+
+  // Status
+  status      String   @default("signup") // "signup", "converted", "churned"
+
+  // Lifetime value
+  totalRevenue Decimal @default(0) @db.Decimal(10, 2)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([referrerId])
+  @@index([referredId])
+  @@index([referralCodeId])
+}
+
+model Commission {
+  id          String   @id @default(uuid())
+
+  userId      String
+  referralCodeId String
+  referralCode   ReferralCode @relation(fields: [referralCodeId], references: [id])
+
+  // Commission details
+  type        String   // "signup_bonus", "first_payment", "recurring_30", "recurring_60"
+  amount      Decimal  @db.Decimal(10, 2)
+  percentage  Decimal? @db.Decimal(5, 2) // If percentage-based
+
+  // Related entities
+  referralId  String?  // Which referral triggered this
+  paymentId   String?  // Which payment this commission is from
+
+  // Status
+  status      String   @default("pending") // "pending", "approved", "paid", "cancelled"
+
+  // Payout tracking
+  approvedAt  DateTime?
+  paidAt      DateTime?
+  payoutMethod String? // "bank_transfer", "paypal", "pix", "credit"
+  payoutId    String?  // External payout reference
+
+  // Notes
+  notes       String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([referralCodeId])
+  @@index([status])
+}
+
+model AffiliateProgram {
+  id          String   @id @default(uuid())
+
+  userId      String   @unique
+
+  // Application
+  status      String   @default("pending") // "pending", "approved", "rejected", "suspended"
+  appliedAt   DateTime @default(now())
+  approvedAt  DateTime?
+
+  // Details
+  companyName String?
+  website     String?
+  audience    String?  // Description of their audience
+  channels    Json?    // ["instagram", "youtube", "blog", "email"]
+
+  // Commission tier
+  tier        String   @default("standard") // "standard", "premium", "vip"
+
+  // Custom commission rates (overrides)
+  signupBonus      Decimal? @db.Decimal(10, 2)
+  firstPaymentRate Decimal? @db.Decimal(5, 2) // Percentage
+  recurringRate    Decimal? @db.Decimal(5, 2) // Percentage
+
+  // Requirements
+  minPayout   Decimal  @default(50) @db.Decimal(10, 2)
+
+  // Payment details
+  paymentMethod String? // "pix", "bank_transfer", "paypal"
+  pixKey      String?
+  bankDetails Json?
+
+  // Marketing assets access
+  hasMarketingAccess Boolean @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+}
+
+model ReferralReward {
+  id          String   @id @default(uuid())
+
+  // Recipient
+  userId      String
+
+  // Reward details
+  type        String   // "free_month", "discount", "credits", "bonus_xp"
+  value       Decimal  @db.Decimal(10, 2)
+  description String
+
+  // Trigger
+  triggeredBy String   // "friend_signup", "friend_payment", "milestone_5", "milestone_10"
+  referralId  String?  // Which referral triggered this
+
+  // Redemption
+  isRedeemed  Boolean  @default(false)
+  redeemedAt  DateTime?
+  expiresAt   DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@index([isRedeemed])
+}
+
+model ReferralCampaign {
+  id          String   @id @default(uuid())
+
+  // Campaign details
+  name        String
+  description String?
+  slug        String   @unique
+
+  // Bonuses
+  referrerBonus Decimal @default(0) @db.Decimal(10, 2) // Extra for referrer
+  referredBonus Decimal @default(0) @db.Decimal(10, 2) // Extra for new user
+
+  // Period
+  startDate   DateTime
+  endDate     DateTime
+
+  // Limits
+  maxUses     Int?
+  currentUses Int      @default(0)
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([slug])
+  @@index([isActive])
+}
+
+model ReferralClick {
+  id          String   @id @default(uuid())
+
+  referralCodeId String
+
+  // Tracking
+  ipAddress   String
+  userAgent   String?
+  referrer    String?  // HTTP referrer
+
+  // UTM parameters
+  utmSource   String?
+  utmMedium   String?
+  utmCampaign String?
+
+  // Conversion
+  converted   Boolean  @default(false)
+  convertedUserId String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([referralCodeId])
+  @@index([ipAddress])
+}
