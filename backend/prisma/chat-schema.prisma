@@ -1,0 +1,291 @@
+/**
+ * CHAT & MESSAGING SCHEMA
+ * Real-time chat with private messages, group chats, and study rooms
+ */
+
+model Conversation {
+  id          String   @id @default(uuid())
+
+  // Type
+  type        String   // "direct" (1-on-1), "group", "study_room"
+  name        String?  // For groups and study rooms
+  description String?
+  imageUrl    String?
+
+  // Participants
+  participantIds Json  // Array of user IDs
+
+  // Settings
+  isActive    Boolean  @default(true)
+  isPinned    Boolean  @default(false) // User can pin conversations
+  isMuted     Boolean  @default(false)
+
+  // Last message
+  lastMessageId   String?
+  lastMessageAt   DateTime?
+  lastMessageText String?  // Cached for quick display
+
+  // Metadata
+  createdBy   String?  // User who created (for groups)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  messages    Message[]
+  participants ConversationParticipant[]
+
+  @@index([type])
+  @@index([lastMessageAt])
+}
+
+model ConversationParticipant {
+  id          String   @id @default(uuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  userId      String
+
+  // Status
+  role        String   @default("member") // "admin", "moderator", "member"
+  isActive    Boolean  @default(true)
+  isMuted     Boolean  @default(false)
+
+  // Read tracking
+  lastReadAt  DateTime?
+  lastReadMessageId String?
+  unreadCount Int      @default(0)
+
+  // Typing indicator
+  isTyping    Boolean  @default(false)
+  typingAt    DateTime?
+
+  // Notifications
+  notificationsEnabled Boolean @default(true)
+
+  joinedAt    DateTime @default(now())
+  leftAt      DateTime?
+
+  @@unique([conversationId, userId])
+  @@index([userId])
+  @@index([conversationId])
+}
+
+model Message {
+  id          String   @id @default(uuid())
+
+  conversationId String
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  senderId    String
+
+  // Content
+  type        String   @default("text") // "text", "image", "audio", "file", "phrase", "achievement"
+  content     String   @db.Text
+  metadata    Json?    // Extra data for special message types
+
+  // Attachments
+  attachments Json?    // Array of file URLs
+
+  // Reply/Thread
+  replyToId   String?  // Message being replied to
+  threadId    String?  // Thread root message
+
+  // Status
+  isEdited    Boolean  @default(false)
+  editedAt    DateTime?
+  isDeleted   Boolean  @default(false)
+  deletedAt   DateTime?
+  deletedBy   String?
+
+  // Reactions
+  reactions   Json?    // { "👍": ["user1", "user2"], "❤️": ["user3"] }
+
+  // Delivery tracking
+  deliveredTo Json?    // Array of user IDs who received
+  readBy      Json?    // Array of user IDs who read
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([conversationId])
+  @@index([senderId])
+  @@index([createdAt])
+}
+
+model MessageReaction {
+  id          String   @id @default(uuid())
+
+  messageId   String
+  userId      String
+  emoji       String   // "👍", "❤️", "😂", "🎉", etc.
+
+  createdAt   DateTime @default(now())
+
+  @@unique([messageId, userId, emoji])
+  @@index([messageId])
+  @@index([userId])
+}
+
+model StudyRoom {
+  id          String   @id @default(uuid())
+
+  // Room info
+  name        String
+  description String?
+  imageUrl    String?
+  topic       String?  // "Business English", "Travel English", etc.
+
+  // Capacity
+  maxParticipants Int   @default(50)
+  currentParticipants Int @default(0)
+
+  // Privacy
+  isPublic    Boolean  @default(true)
+  password    String?  // Encrypted password for private rooms
+
+  // Status
+  status      String   @default("active") // "active", "scheduled", "ended"
+  scheduledFor DateTime?
+  startedAt   DateTime?
+  endedAt     DateTime?
+
+  // Features
+  allowsVoice Boolean  @default(false)
+  allowsVideo Boolean  @default(false)
+  allowsScreenShare Boolean @default(false)
+
+  // Moderation
+  hostId      String
+  moderatorIds Json?   // Array of user IDs
+
+  // Conversation link
+  conversationId String @unique
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([status])
+  @@index([isPublic])
+  @@index([scheduledFor])
+}
+
+model ChatBot {
+  id          String   @id @default(uuid())
+
+  // Bot info
+  name        String
+  description String?
+  avatarUrl   String?
+
+  // Type
+  type        String   // "ai_tutor", "practice_partner", "grammar_helper"
+
+  // AI settings
+  model       String   @default("gpt-4") // "gpt-4", "gpt-3.5-turbo"
+  systemPrompt String  @db.Text
+  temperature Float    @default(0.7)
+  maxTokens   Int      @default(500)
+
+  // Personality
+  personality Json?    // Traits, speaking style, etc.
+
+  // Access
+  isPremiumOnly Boolean @default(false)
+  isActive    Boolean  @default(true)
+
+  // Usage limits
+  dailyMessageLimit Int? // Per user per day
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([type])
+  @@index([isActive])
+}
+
+model UserChatBotSession {
+  id          String   @id @default(uuid())
+
+  userId      String
+  botId       String
+
+  conversationId String @unique
+
+  // Session data
+  sessionData Json?    // Conversation context, user progress, etc.
+
+  // Usage tracking
+  messagesCount Int    @default(0)
+  lastMessageAt DateTime?
+
+  // Status
+  isActive    Boolean  @default(true)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@unique([userId, botId, isActive])
+  @@index([userId])
+  @@index([botId])
+}
+
+model BlockedUser {
+  id          String   @id @default(uuid())
+
+  userId      String   // User who blocked
+  blockedUserId String // User who is blocked
+
+  reason      String?
+
+  createdAt   DateTime @default(now())
+
+  @@unique([userId, blockedUserId])
+  @@index([userId])
+  @@index([blockedUserId])
+}
+
+model ReportedMessage {
+  id          String   @id @default(uuid())
+
+  messageId   String
+  reporterId  String
+  reason      String   // "spam", "harassment", "inappropriate", "other"
+  description String?
+
+  // Status
+  status      String   @default("pending") // "pending", "reviewed", "action_taken", "dismissed"
+  reviewedBy  String?
+  reviewedAt  DateTime?
+  actionTaken String?
+
+  createdAt   DateTime @default(now())
+
+  @@index([status])
+  @@index([messageId])
+}
+
+model ChatNotification {
+  id          String   @id @default(uuid())
+
+  userId      String
+  conversationId String
+
+  type        String   // "new_message", "mention", "reaction", "invitation"
+  title       String
+  message     String
+
+  // Reference
+  messageId   String?
+  senderId    String?
+
+  // Status
+  isRead      Boolean  @default(false)
+  readAt      DateTime?
+
+  createdAt   DateTime @default(now())
+
+  @@index([userId, isRead])
+  @@index([conversationId])
+}
