@@ -1,182 +1,26 @@
 /**
- * SOCIAL FEATURES SCHEMA
- * User profiles, friends, study groups, and activity feed
+ * SOCIAL MEDIA INTEGRATION SCHEMA
  */
 
-model UserProfile {
+model SocialAccount {
   id          String   @id @default(uuid())
-  userId      String   @unique
-
-  // Profile info
-  bio         String?  @db.Text
-  location    String?
-  language    String?  // Native language
-  timezone    String?
-
-  // Learning goals
-  learningGoal String? // "travel", "work", "study", "personal"
-  targetLevel  String? // "A1", "A2", "B1", "B2", "C1", "C2"
-  studyTime    Int     @default(30) // minutes per day goal
-
-  // Social settings
-  isPublic     Boolean @default(true)
-  showStreak   Boolean @default(true)
-  showXP       Boolean @default(true)
-  showProgress Boolean @default(true)
-
-  // Stats (cached for performance)
-  totalStudyTime  Int @default(0) // seconds
-  phrasesLearned  Int @default(0)
-  lessonsCompleted Int @default(0)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-}
-
-model Friendship {
-  id          String   @id @default(uuid())
-
   userId      String
-  friendId    String
-
-  status      String   @default("pending") // "pending", "accepted", "blocked"
-  requestedBy String   // Who sent the friend request
-
+  provider    String   // "facebook", "twitter", "instagram", "linkedin"
+  providerId  String
+  accessToken String   @db.Text
+  autoShare   Boolean  @default(false)
   createdAt   DateTime @default(now())
-  acceptedAt  DateTime?
-
-  user        User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
-  friend      User     @relation("FriendOf", fields: [friendId], references: [id], onDelete: Cascade)
-
-  @@unique([userId, friendId])
-  @@index([userId])
-  @@index([friendId])
-  @@index([status])
+  
+  @@unique([userId, provider])
 }
 
-model StudyGroup {
+model SocialShare {
   id          String   @id @default(uuid())
-
-  name        String
-  description String?  @db.Text
-  image       String?
-
-  creatorId   String
-  isPublic    Boolean  @default(true)
-
-  // Settings
-  maxMembers  Int      @default(50)
-  requireApproval Boolean @default(false)
-
-  // Stats
-  memberCount Int      @default(1)
-  totalXP     Int      @default(0)
-
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-
-  creator     User            @relation(fields: [creatorId], references: [id], onDelete: Cascade)
-  members     GroupMember[]
-  activities  GroupActivity[]
-
-  @@index([creatorId])
-  @@index([isPublic])
-  @@index([createdAt])
-}
-
-model GroupMember {
-  id          String   @id @default(uuid())
-
-  groupId     String
   userId      String
-
-  role        String   @default("member") // "member", "moderator", "admin"
-  status      String   @default("active") // "pending", "active", "banned"
-
-  xpContributed Int    @default(0)
-
-  joinedAt    DateTime @default(now())
-
-  group       StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([groupId, userId])
-  @@index([groupId])
-  @@index([userId])
-  @@index([status])
-}
-
-model GroupActivity {
-  id          String   @id @default(uuid())
-
-  groupId     String
-  userId      String
-
-  type        String   // "member_joined", "achievement", "milestone", "challenge_completed"
-  content     String   @db.Text
-  metadata    Json?
-
+  type        String   // "achievement", "level_up", "certificate"
+  platforms   Json
+  status      String   @default("success")
   createdAt   DateTime @default(now())
-
-  group       StudyGroup @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([groupId])
+  
   @@index([userId])
-  @@index([createdAt])
-}
-
-model ActivityFeed {
-  id          String   @id @default(uuid())
-
-  userId      String
-
-  type        String   // "achievement", "streak", "level_up", "phrase_milestone", "friend_joined"
-  title       String
-  description String?  @db.Text
-  icon        String?  // Icon name or emoji
-
-  // Related entities
-  relatedUserId  String?
-  relatedGroupId String?
-
-  metadata    Json?
-
-  isPublic    Boolean  @default(true)
-
-  createdAt   DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@index([userId])
-  @@index([createdAt])
-  @@index([isPublic])
-}
-
-model Leaderboard {
-  id          String   @id @default(uuid())
-
-  type        String   // "global_xp", "global_streak", "weekly_xp", "monthly_xp", "friends_xp"
-  period      String   // "all_time", "weekly", "monthly", "daily"
-
-  userId      String
-  rank        Int
-  score       Int
-
-  // Metadata
-  country     String?
-  level       String?
-
-  createdAt   DateTime @default(now())
-
-  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([type, period, userId])
-  @@index([type, period, rank])
-  @@index([userId])
-  @@index([createdAt])
 }
