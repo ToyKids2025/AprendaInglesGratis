@@ -367,7 +367,7 @@ export class QueryOptimizer {
     }
 
     // Check for inefficient where clauses
-    if (query.where && this.isInefficient WhereClause(query.where)) {
+    if (query.where && this.isInefficientWhereClause(query.where)) {
       suggestions.push({
         query: JSON.stringify(query),
         issue: 'Inefficient where clause',
@@ -387,7 +387,7 @@ export class QueryOptimizer {
     }
 
     // Check for SELECT *
-    if (!query.select && this.hasMany Fields(model)) {
+    if (!query.select && this.hasManyFields(model)) {
       suggestions.push({
         query: JSON.stringify(query),
         issue: 'Selecting all fields',

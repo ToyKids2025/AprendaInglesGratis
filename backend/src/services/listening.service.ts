@@ -71,7 +71,7 @@ interface ListeningAttempt {
   playbackSpeed: number;
   attempts: number;
   timeSpent: number; // seconds
-  hints Used: number;
+  hintsUsed: number;
   timestamp: Date;
 }
 

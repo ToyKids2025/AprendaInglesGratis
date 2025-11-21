@@ -1,0 +1,401 @@
+// ==================== PRISMA SCHEMA - AprendaInglesGratis ====================
+// Database: PostgreSQL
+// ORM: Prisma v5.7.1
+// Version: 1.0.0
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ==================== USER MANAGEMENT ====================
+
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  password      String
+  name          String
+  avatar        String?
+  phone         String?
+  birthDate     DateTime?
+  country       String   @default("BR")
+  timezone      String   @default("America/Sao_Paulo")
+  level         String   @default("A1") // CEFR level
+
+  // Authentication
+  emailVerified Boolean  @default(false)
+  refreshToken  String?
+  lastLogin     DateTime?
+
+  // Subscription
+  subscriptionStatus String @default("free") // free, premium, vip
+  subscriptionEndsAt DateTime?
+  stripeCustomerId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  progress       UserProgress[]
+  gamification   Gamification?
+  achievements   UserAchievement[]
+  lessons        Lesson[]
+  payments       Payment[]
+  speakingSessions SpeakingSession[]
+  listeningSessions ListeningSession[]
+  placementTests PlacementTest[]
+
+  @@index([email])
+  @@index([subscriptionStatus])
+  @@map("users")
+}
+
+model Gamification {
+  id        String   @id @default(cuid())
+  userId    String   @unique
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  xp        Int      @default(0)
+  level     Int      @default(1)
+  xpToNextLevel Int  @default(100)
+
+  coins     Int      @default(0)
+  gems      Int      @default(0)
+
+  streak    Int      @default(0)
+  maxStreak Int      @default(0)
+  lastActiveDate DateTime @default(now())
+
+  rank      String   @default("Bronze") // Bronze, Silver, Gold, Platinum, Diamond, Master
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId])
+  @@index([xp(sort: Desc)]) // For leaderboards
+  @@map("gamification")
+}
+
+model Achievement {
+  id          String   @id @default(cuid())
+  title       String
+  description String
+  icon        String
+  category    String   // streak, pronunciation, listening, completion, social
+  xpReward    Int      @default(0)
+  coinsReward Int      @default(0)
+  gemsReward  Int      @default(0)
+  requirement Int      // Number needed to unlock
+  isSecret    Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  userAchievements UserAchievement[]
+
+  @@map("achievements")
+}
+
+model UserAchievement {
+  id            String   @id @default(cuid())
+  userId        String
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  achievementId String
+  achievement   Achievement @relation(fields: [achievementId], references: [id], onDelete: Cascade)
+
+  progress      Int      @default(0)
+  unlocked      Boolean  @default(false)
+  unlockedAt    DateTime?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, achievementId])
+  @@index([userId])
+  @@map("user_achievements")
+}
+
+// ==================== LEARNING CONTENT ====================
+
+model Level {
+  id          String   @id @default(cuid())
+  name        String   @unique // A1, A2, B1, B2, C1, C2
+  description String
+  order       Int      @unique
+
+  createdAt   DateTime @default(now())
+
+  // Relations
+  phrases     Phrase[]
+
+  @@map("levels")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  description String?
+  icon      String?
+  order     Int      @default(0)
+
+  createdAt DateTime @default(now())
+
+  // Relations
+  phrases   Phrase[]
+
+  @@map("categories")
+}
+
+model Phrase {
+  id          String   @id @default(cuid())
+  text        String
+  translation String
+  audioUrl    String?
+  imageUrl    String?
+
+  levelId     String
+  level       Level    @relation(fields: [levelId], references: [id])
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
+
+  // Metadata
+  difficulty  Int      @default(1) // 1-10
+  tags        String[] // ["greetings", "formal", "informal"]
+
+  // IPA phonetics
+  ipaTranscription String?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  // Relations
+  progress    UserProgress[]
+  speakingAttempts SpeakingAttempt[]
+
+  @@index([levelId, categoryId])
+  @@index([difficulty])
+  @@map("phrases")
+}
+
+model UserProgress {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  phraseId   String
+  phrase     Phrase   @relation(fields: [phraseId], references: [id], onDelete: Cascade)
+
+  // Progress metrics
+  mastery    Int      @default(0) // 0-100
+  attempts   Int      @default(0)
+  successes  Int      @default(0)
+  lastScore  Int      @default(0)
+  bestScore  Int      @default(0)
+
+  // Spaced repetition
+  easeFactor Float    @default(2.5) // SuperMemo algorithm
+  interval   Int      @default(0) // Days until next review
+  nextReview DateTime @default(now())
+
+  lastPracticed DateTime @default(now())
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([userId, phraseId])
+  @@index([userId, nextReview])
+  @@index([userId, mastery])
+  @@map("user_progress")
+}
+
+// ==================== SPEAKING & PRONUNCIATION ====================
+
+model SpeakingSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  attempts  SpeakingAttempt[]
+  bestScore Int      @default(0)
+
+  startedAt   DateTime @default(now())
+  completedAt DateTime?
+  totalTime   Int      @default(0) // seconds
+
+  @@index([userId])
+  @@map("speaking_sessions")
+}
+
+model SpeakingAttempt {
+  id        String   @id @default(cuid())
+  sessionId String
+  session   SpeakingSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  phraseId  String
+  phrase    Phrase   @relation(fields: [phraseId], references: [id])
+
+  audioUrl  String
+  duration  Int      // milliseconds
+
+  // Analysis results
+  transcription String
+  overallScore  Int    // 0-100
+  accuracy      Int    // 0-100
+  fluency       Int    // 0-100
+  completeness  Int    // 0-100
+  prosody       Int    // 0-100
+
+  feedback      Json   // PronunciationFeedback
+  mistakes      Json   // Mistake[]
+  phonemes      Json   // PhonemeAnalysis[]
+
+  createdAt DateTime @default(now())
+
+  @@index([sessionId])
+  @@index([phraseId])
+  @@map("speaking_attempts")
+}
+
+// ==================== LISTENING ====================
+
+model ListeningSession {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  exerciseType String  // dictation, comprehension, fill-blanks, multiple-choice
+  accent       String  // US, UK, AU, CA, IN
+  speed        Float   // 0.5 - 2.0
+
+  exercises    Json    // Exercise data
+  answers      Json    // User answers
+
+  score        Int     @default(0) // 0-100
+  timeSpent    Int     @default(0) // seconds
+
+  completedAt  DateTime?
+  createdAt    DateTime @default(now())
+
+  @@index([userId])
+  @@map("listening_sessions")
+}
+
+// ==================== PLACEMENT TEST ====================
+
+model PlacementTest {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  questions Json     // PlacementQuestion[]
+  answers   Json     // Answer[]
+
+  // IRT parameters
+  theta     Float    // Ability estimate
+  standardError Float // Standard error of theta
+
+  // Results
+  level     String   // A1, A2, B1, B2, C1, C2
+  score     Int      // 0-100
+
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+
+  @@index([userId])
+  @@map("placement_tests")
+}
+
+// ==================== TEACHERS ====================
+
+model Teacher {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  avatar    String?
+  bio       String?
+
+  // Qualifications
+  certifications String[] // ["TEFL", "CELTA", "TESOL"]
+  specializations String[] // ["Business", "Conversation", "Exam Prep"]
+  languages   String[]     // ["English", "Portuguese", "Spanish"]
+
+  // Stats
+  rating       Float   @default(5.0)
+  totalLessons Int     @default(0)
+  experience   Int     @default(0) // years
+  hourlyRate   Int     // in cents (R$ 50.00 = 5000)
+
+  // Availability
+  timezone     String  @default("America/Sao_Paulo")
+  availability Json    // Weekly schedule
+
+  isActive     Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  lessons   Lesson[]
+
+  @@index([rating])
+  @@index([hourlyRate])
+  @@map("teachers")
+}
+
+model Lesson {
+  id         String   @id @default(cuid())
+  studentId  String
+  student    User     @relation(fields: [studentId], references: [id], onDelete: Cascade)
+  teacherId  String
+  teacher    Teacher  @relation(fields: [teacherId], references: [id], onDelete: Cascade)
+
+  scheduledAt DateTime
+  duration    Int      // minutes
+  status      String   @default("scheduled") // scheduled, completed, cancelled
+
+  meetingUrl  String?
+  notes       String?
+  feedback    String?
+
+  // Payment
+  price       Int      // in cents
+  paid        Boolean  @default(false)
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([studentId])
+  @@index([teacherId])
+  @@index([scheduledAt])
+  @@map("lessons")
+}
+
+// ==================== PAYMENTS ====================
+
+model Payment {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  amount    Int      // in cents
+  currency  String   @default("BRL")
+  status    String   // pending, succeeded, failed, refunded
+
+  // Stripe
+  stripePaymentIntentId String? @unique
+  stripeInvoiceId       String?
+
+  // Metadata
+  description String
+  metadata    Json?
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([userId])
+  @@index([status])
+  @@map("payments")
+}
