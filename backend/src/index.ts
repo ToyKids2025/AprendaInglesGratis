@@ -64,7 +64,7 @@ app.use('/api', globalLimiter);
 
 // ==================== HEALTH CHECK ====================
 
-app.get('/health', async (req: Request, res: Response) => {
+app.get('/health', async (_req: Request, res: Response) => {
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -79,31 +79,31 @@ app.get('/health', async (req: Request, res: Response) => {
 // ==================== API ROUTES ====================
 
 // API v1 routes
-app.use('/api/v1/auth', (req: Request, res: Response) => {
+app.use('/api/v1/auth', (_req: Request, res: Response) => {
   res.json({ message: 'Auth routes - Implementation in progress' });
 });
 
-app.use('/api/v1/speaking', (req: Request, res: Response) => {
+app.use('/api/v1/speaking', (_req: Request, res: Response) => {
   res.json({ message: 'Speaking routes - Implementation in progress' });
 });
 
-app.use('/api/v1/listening', (req: Request, res: Response) => {
+app.use('/api/v1/listening', (_req: Request, res: Response) => {
   res.json({ message: 'Listening routes - Implementation in progress' });
 });
 
-app.use('/api/v1/placement', (req: Request, res: Response) => {
+app.use('/api/v1/placement', (_req: Request, res: Response) => {
   res.json({ message: 'Placement test routes - Implementation in progress' });
 });
 
-app.use('/api/v1/teachers', (req: Request, res: Response) => {
+app.use('/api/v1/teachers', (_req: Request, res: Response) => {
   res.json({ message: 'Teachers routes - Implementation in progress' });
 });
 
-app.use('/api/v1/gamification', (req: Request, res: Response) => {
+app.use('/api/v1/gamification', (_req: Request, res: Response) => {
   res.json({ message: 'Gamification routes - Implementation in progress' });
 });
 
-app.use('/api/v1/grammar', (req: Request, res: Response) => {
+app.use('/api/v1/grammar', (_req: Request, res: Response) => {
   res.json({ message: 'Grammar routes - Implementation in progress' });
 });
 
@@ -119,7 +119,7 @@ app.use((req: Request, res: Response) => {
 });
 
 // Global error handler
-app.use((err: Error, req: Request, res: Response, next: NextFunction) => {
+app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
   console.error('Error:', err);
 
   const statusCode = (err as any).statusCode || 500;

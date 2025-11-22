@@ -30,11 +30,7 @@ interface ValidationError {
   code: string;
 }
 
-interface ValidationResult {
-  success: boolean;
-  data?: any;
-  errors?: ValidationError[];
-}
+// ValidationResult type is used in type annotations for validation functions
 
 type ValidationType = 'body' | 'query' | 'params' | 'headers';
 
@@ -431,7 +427,7 @@ export const RateLimiters = {
  */
 export function sanitizeInput(
   req: Request,
-  res: Response,
+  _res: Response,
   next: NextFunction
 ): void {
   // Sanitize body
@@ -510,7 +506,7 @@ export const FileValidation = {
 export function validateFileUpload(
   type: 'image' | 'audio' | 'document'
 ) {
-  return (req: Request, res: Response, next: NextFunction): void => {
+  return (req: Request & { file?: Express.Multer.File }, res: Response, next: NextFunction): void => {
     const config = FileValidation[type];
 
     if (!req.file) {
@@ -548,7 +544,7 @@ export function validateFileUpload(
 /**
  * Validate user owns resource
  */
-export function validateOwnership(resourceType: string, paramName: string = 'id') {
+export function validateOwnership(_resourceType: string, paramName: string = 'id') {
   return async (
     req: Request,
     res: Response,
@@ -556,7 +552,7 @@ export function validateOwnership(resourceType: string, paramName: string = 'id'
   ): Promise<void> => {
     try {
       const userId = (req as any).user?.id;
-      const resourceId = req.params[paramName];
+      const _resourceId = req.params[paramName];
 
       if (!userId) {
         res.status(401).json({
@@ -588,7 +584,7 @@ export function validateOwnership(resourceType: string, paramName: string = 'id'
 /**
  * Validate subscription access
  */
-export function validateSubscription(requiredPlan: string) {
+export function validateSubscription(_requiredPlan: string) {
   return async (
     req: Request,
     res: Response,
