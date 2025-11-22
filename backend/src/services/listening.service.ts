@@ -17,7 +17,7 @@
  * @version 1.0.0
  */
 
-import { getCacheService, CacheKeys } from './cache.service';
+import { getCacheService } from './cache.service';
 import OpenAI from 'openai';
 
 // ==================== TYPES ====================
@@ -202,7 +202,7 @@ export class ListeningService {
    * Check dictation answer
    */
   async checkDictation(
-    exerciseId: string,
+    _exerciseId: string,
     userAnswer: string,
     correctAnswer: string,
     playbackSpeed: number
@@ -815,7 +815,7 @@ Provide encouraging feedback (2-3 sentences) with specific tips to improve.
   }
 
   private async getExercise(
-    exerciseId: string
+    _exerciseId: string
   ): Promise<ListeningExercise | null> {
     // In production, fetch from database
     return null;

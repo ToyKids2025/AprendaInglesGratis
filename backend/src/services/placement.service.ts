@@ -517,7 +517,7 @@ export class PlacementService {
    */
   private analyzePerformance(
     skillBreakdown: Map<SkillType, SkillScore>,
-    test: PlacementTest
+    _test: PlacementTest
   ): { strengths: string[]; weaknesses: string[] } {
     const strengths: string[] = [];
     const weaknesses: string[] = [];
@@ -544,7 +544,7 @@ export class PlacementService {
    */
   private async generateRecommendations(
     level: CEFRLevel,
-    strengths: string[],
+    _strengths: string[],
     weaknesses: string[]
   ): Promise<Recommendation[]> {
     const recommendations: Recommendation[] = [];

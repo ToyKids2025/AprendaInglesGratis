@@ -410,7 +410,7 @@ export class CacheService {
     return json;
   }
 
-  private async deserialize<T>(data: string, compress?: boolean): Promise<T> {
+  private async deserialize<T>(data: string, _compress?: boolean): Promise<T> {
     // Check if compressed
     if (data.startsWith('gzip:')) {
       const compressed = Buffer.from(data.slice(5), 'base64');

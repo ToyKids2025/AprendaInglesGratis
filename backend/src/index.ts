@@ -78,34 +78,10 @@ app.get('/health', async (_req: Request, res: Response) => {
 
 // ==================== API ROUTES ====================
 
-// API v1 routes
-app.use('/api/v1/auth', (_req: Request, res: Response) => {
-  res.json({ message: 'Auth routes - Implementation in progress' });
-});
+import apiRoutes from './routes';
 
-app.use('/api/v1/speaking', (_req: Request, res: Response) => {
-  res.json({ message: 'Speaking routes - Implementation in progress' });
-});
-
-app.use('/api/v1/listening', (_req: Request, res: Response) => {
-  res.json({ message: 'Listening routes - Implementation in progress' });
-});
-
-app.use('/api/v1/placement', (_req: Request, res: Response) => {
-  res.json({ message: 'Placement test routes - Implementation in progress' });
-});
-
-app.use('/api/v1/teachers', (_req: Request, res: Response) => {
-  res.json({ message: 'Teachers routes - Implementation in progress' });
-});
-
-app.use('/api/v1/gamification', (_req: Request, res: Response) => {
-  res.json({ message: 'Gamification routes - Implementation in progress' });
-});
-
-app.use('/api/v1/grammar', (_req: Request, res: Response) => {
-  res.json({ message: 'Grammar routes - Implementation in progress' });
-});
+// API v1 routes - connect to real implementations
+app.use('/api/v1', apiRoutes);
 
 // ==================== ERROR HANDLING ====================
 

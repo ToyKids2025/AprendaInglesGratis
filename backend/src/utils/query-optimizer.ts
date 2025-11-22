@@ -154,7 +154,7 @@ export class QueryOptimizer {
     model: string,
     field: string = 'id'
   ): DataLoader<string, T> {
-    return new DataLoader<string, T>(async (ids) => {
+    return new DataLoader<string, T>(async (ids: string[]): Promise<T[]> => {
       const records = await (this.prisma as any)[model].findMany({
         where: {
           [field]: { in: ids },
@@ -163,7 +163,7 @@ export class QueryOptimizer {
 
       // Ensure order matches input
       const recordMap = new Map(records.map((r: any) => [r[field], r]));
-      return ids.map((id) => recordMap.get(id));
+      return ids.map((id) => recordMap.get(id)) as T[];
     });
   }
 
@@ -194,8 +194,12 @@ export class QueryOptimizer {
             email: true,
             name: true,
             level: true,
-            xp: true,
-            streak: true,
+            gamification: {
+              select: {
+                xp: true,
+                streak: true,
+              },
+            },
           },
         });
 
@@ -461,7 +465,7 @@ export class QueryOptimizer {
     return false;
   }
 
-  private hasManyFields(model: string): boolean {
+  private hasManyFields(_model: string): boolean {
     // Simplified: In real app, check Prisma schema
     return true;
   }
@@ -532,11 +536,7 @@ export class CommonQueries {
               },
               orderBy: { unlockedAt: 'desc' },
             },
-            subscriptions: {
-              where: { status: 'ACTIVE' },
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
+            gamification: true,
           },
         });
       },

@@ -140,6 +140,7 @@ interface TeacherMatch {
 
 export class TeachersService {
   private cache: ReturnType<typeof getCacheService>;
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
   private openai: OpenAI;
 
   constructor() {
@@ -333,7 +334,7 @@ export class TeachersService {
   /**
    * Check if teacher has availability at specific time
    */
-  private hasAvailability(teacher: Teacher, preferredTime: any): boolean {
+  private hasAvailability(teacher: Teacher, _preferredTime: any): boolean {
     // Simplified: In production, check actual availability slots
     return teacher.availability.length > 0;
   }
@@ -444,7 +445,7 @@ export class TeachersService {
    */
   async cancelLesson(
     lessonId: string,
-    userId: string,
+    _userId: string,
     reason: string
   ): Promise<Lesson> {
     const lesson = await this.getLesson(lessonId);
@@ -625,16 +626,16 @@ export class TeachersService {
     return [];
   }
 
-  private async getTeacher(teacherId: string): Promise<Teacher> {
+  private async getTeacher(_teacherId: string): Promise<Teacher> {
     // In production, fetch from database
     throw new Error('Teacher not found');
   }
 
-  private async saveTeacher(teacher: Teacher): Promise<void> {
+  private async saveTeacher(_teacher: Teacher): Promise<void> {
     // In production, save to database
   }
 
-  private async getStudentProfile(studentId: string): Promise<any> {
+  private async getStudentProfile(_studentId: string): Promise<any> {
     // In production, fetch student preferences and history
     return {
       goals: ['conversation', 'business_english'],
@@ -643,7 +644,7 @@ export class TeachersService {
     };
   }
 
-  private async getLesson(lessonId: string): Promise<Lesson> {
+  private async getLesson(_lessonId: string): Promise<Lesson> {
     // In production, fetch from database
     throw new Error('Lesson not found');
   }
@@ -653,17 +654,17 @@ export class TeachersService {
     await this.cache.set(`lesson:${lesson.id}`, lesson, { ttl: 3600 });
   }
 
-  private async getTeacherLessons(teacherId: string): Promise<Lesson[]> {
+  private async getTeacherLessons(_teacherId: string): Promise<Lesson[]> {
     // In production, query from database
     return [];
   }
 
-  private async saveReview(review: LessonReview): Promise<void> {
+  private async saveReview(_review: LessonReview): Promise<void> {
     // In production, save to database
   }
 
   private async getTeacherReviews(
-    teacherId: string
+    _teacherId: string
   ): Promise<LessonReview[]> {
     // In production, query from database
     return [];

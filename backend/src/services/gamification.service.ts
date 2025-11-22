@@ -24,7 +24,7 @@
  * @version 1.0.0
  */
 
-import { getCacheService, CacheKeys } from './cache.service';
+import { getCacheService } from './cache.service';
 
 // ==================== TYPES ====================
 
@@ -230,6 +230,8 @@ export class GamificationService {
   }> {
     const gamification = await this.getUserGamification(userId);
 
+    // Store old level for potential future use in level-up notifications
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const oldLevel = gamification.level;
     gamification.xp += amount;
     gamification.totalXP += amount;
@@ -620,7 +622,7 @@ export class GamificationService {
     type: LeaderboardType,
     period: LeaderboardPeriod,
     userId: string,
-    limit = 100
+    _limit = 100
   ): Promise<Leaderboard> {
     const cacheKey = `leaderboard:${type}:${period}`;
 
@@ -763,7 +765,7 @@ export class GamificationService {
   /**
    * Get user stats
    */
-  private async getUserStats(userId: string): Promise<any> {
+  private async getUserStats(_userId: string): Promise<any> {
     // In production, aggregate from database
     return {
       totalXP: 0,

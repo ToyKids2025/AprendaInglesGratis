@@ -503,10 +503,19 @@ export const FileValidation = {
   },
 };
 
+interface MulterFile {
+  fieldname: string;
+  originalname: string;
+  encoding: string;
+  mimetype: string;
+  size: number;
+  buffer: Buffer;
+}
+
 export function validateFileUpload(
   type: 'image' | 'audio' | 'document'
 ) {
-  return (req: Request & { file?: Express.Multer.File }, res: Response, next: NextFunction): void => {
+  return (req: Request & { file?: MulterFile }, res: Response, next: NextFunction): void => {
     const config = FileValidation[type];
 
     if (!req.file) {
@@ -552,7 +561,8 @@ export function validateOwnership(_resourceType: string, paramName: string = 'id
   ): Promise<void> => {
     try {
       const userId = (req as any).user?.id;
-      const _resourceId = req.params[paramName];
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const resourceId = req.params[paramName];
 
       if (!userId) {
         res.status(401).json({

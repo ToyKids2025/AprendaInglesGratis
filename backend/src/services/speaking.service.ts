@@ -23,7 +23,7 @@
  * @version 1.0.0
  */
 
-import { getCacheService, CacheKeys } from './cache.service';
+import { getCacheService } from './cache.service';
 import OpenAI from 'openai';
 
 // ==================== TYPES ====================
@@ -66,6 +66,7 @@ interface Mistake {
   suggestion: string;
 }
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 interface SpeakingSession {
   id: string;
   userId: string;
@@ -475,7 +476,7 @@ export class SpeakingService {
    * Calculate fluency score
    */
   private async calculateFluency(
-    audio: Buffer | string,
+    _audio: Buffer | string,
     transcription: string
   ): Promise<number> {
     // Simplified: In production, analyze audio for pauses, speech rate
@@ -484,7 +485,8 @@ export class SpeakingService {
     const wordCount = transcription.split(' ').length;
     const expectedRate = 150; // words per minute (average)
 
-    // Estimate duration from word count
+    // Estimate duration from word count (for future audio analysis)
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const estimatedDuration = (wordCount / expectedRate) * 60; // seconds
 
     // Score based on naturalness (not too fast, not too slow)
@@ -517,8 +519,8 @@ export class SpeakingService {
    * Analyze prosody (intonation, rhythm, stress)
    */
   private async analyzeProsody(
-    audio: Buffer | string,
-    expectedText: string
+    _audio: Buffer | string,
+    _expectedText: string
   ): Promise<number> {
     // Simplified: In production, use pitch analysis, energy, rhythm
     // Would require audio signal processing libraries
